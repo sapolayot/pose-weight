@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Build output (TypeScript compile result)
+dist/
+build/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Coverage (tests)
+coverage/
+
+# OS files (Mac)
+.DS_Store
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Optional lock files (เลือกเอา ถ้าไม่อยาก commit)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
