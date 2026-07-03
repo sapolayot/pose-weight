@@ -6,6 +6,7 @@ const API_URL = "http://localhost:3000/api";
 async function login() {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
+  const rememberMe = document.getElementById("rememberMe")?.checked;
 
   try {
     const res = await fetch(`${API_URL}/login`, {
@@ -14,52 +15,47 @@ async function login() {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username, password, rememberMe }),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      document.getElementById("msg").innerText = data.message || "Login failed";
-      document.getElementById("msg").className = "msg error";
+      alert(data.message || "Login failed");
       return;
     }
 
-    document.getElementById("msg").innerText = "Login success";
-    document.getElementById("msg").className = "msg success";
+    alert("Login success");
 
-    window.location.href = "/dashboard.html";
-  } catch (err) {
-    console.error(err);
-  }
-}
+    // ===== จำ username (optional UI convenience)
+    if (rememberMe) {
+      localStorage.setItem("rememberedUser", username);
+    } else {
+      localStorage.removeItem("rememberedUser");
+    }
 
-// ===== LOGOUT =====
-async function logout() {
-  try {
-    await fetch(`${API_URL}/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-
-    window.location.href = "/login.html";
+    window.location.href = "/main.html";
   } catch (err) {
     console.error(err);
   }
 }
 
 // ===== CHECK SESSION =====
-async function checkSession() {
+async function requireAuth(redirectIfLoggedIn = false) {
   try {
     const res = await fetch(`${API_URL}/me`, {
       credentials: "include",
     });
 
-    if (!res.ok) {
-      window.location.href = "/login.html";
+    const isLoggedIn = res.ok;
+
+    if (redirectIfLoggedIn && isLoggedIn) {
+      window.location.href = "/main.html";
     }
 
-    return await res.json();
+    if (!redirectIfLoggedIn && !isLoggedIn) {
+      window.location.href = "/login.html";
+    }
   } catch (err) {
     window.location.href = "/login.html";
   }
@@ -67,12 +63,42 @@ async function checkSession() {
 
 // ===== EVENT HOOK =====
 document.addEventListener("DOMContentLoaded", () => {
-  const loginForm = document.getElementById("loginForm");
+  //form submit
+  const loginForm = document.getElementById("login-form");
 
   if (loginForm) {
     loginForm.addEventListener("submit", (e) => {
       e.preventDefault();
       login();
     });
+  }
+  //toggle visible input
+  const passwordInput = document.getElementById("password");
+  const toggleIcon = document.querySelector(".toggle-password");
+
+  if (toggleIcon) {
+    toggleIcon.addEventListener("click", () => {
+      const isHidden = passwordInput.type === "password";
+
+      passwordInput.type = isHidden ? "text" : "password";
+
+      // เปลี่ยน icon (ถ้าใช้ Font Awesome)
+      toggleIcon.classList.toggle("fa-eye");
+      toggleIcon.classList.toggle("fa-eye-slash");
+    });
+  }
+
+  //remember
+  const savedUser = localStorage.getItem("rememberedUser");
+  if (savedUser) {
+    const usernameInput = document.getElementById("username");
+    if (usernameInput) {
+      usernameInput.value = savedUser;
+    }
+
+    const rememberMe = document.getElementById("rememberMe");
+    if (rememberMe) {
+      rememberMe.checked = true;
+    }
   }
 });
