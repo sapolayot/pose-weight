@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>POSE App</title>
+    <title>เข้าสู่ระบบ - POSE</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,6 +14,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <link rel="stylesheet" href="./css/login.css" />
 
     <style>
       /* --- Reset & Global Styles --- */
@@ -48,8 +49,8 @@
       }
 
       /* =========================================
-           1.สไตล์หน้า Splash Screen (ครอบทับด้านบน)
-           ========================================= */
+           1. สไตล์หน้า Splash Screen (ครอบทับด้านบน)
+         ========================================= */
       .splash-screen {
         position: absolute;
         top: 0;
@@ -61,7 +62,7 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 999; /* อยู่บนสุด */
+        z-index: 999; /* อยู่บนสุดเพื่อบังหน้า Login ไว้ก่อน */
         transition:
           opacity 0.5s ease-out,
           visibility 0.5s; /* เอฟเฟกต์ตอนเฟดออก */
@@ -77,28 +78,11 @@
       .splash-logo-box {
         width: 160px;
         height: 75px;
-        background-color: #dbeafe;
         display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
         margin-bottom: 40px;
-      }
-
-      .splash-logo-text {
-        font-size: 32px;
-        font-weight: 800;
-        color: #2563eb;
-        font-style: italic;
-        letter-spacing: 2px;
-      }
-
-      .splash-registered {
-        position: absolute;
-        top: 2px;
-        right: 2px;
-        font-size: 10px;
-        color: #2563eb;
       }
 
       .splash-title {
@@ -162,8 +146,8 @@
       }
 
       /* =========================================
-           2. สไตล์หน้าเนื้อหาหลัก (Login Screenเดิม)
-           ========================================= */
+           2. สไตล์หน้าเนื้อหาหลัก (Login Screen)
+         ========================================= */
       .main-content {
         width: 100%;
         height: 100%;
@@ -177,6 +161,18 @@
         flex-direction: column;
         align-items: center;
         padding-top: 80px;
+      }
+
+      .logo-box {
+        width: 160px;
+        margin-bottom: 10px;
+      }
+
+      .brand-subtext {
+        font-size: 12px;
+        color: #1e3a8a;
+        font-weight: 500;
+        text-align: center;
       }
 
       .login-card {
@@ -193,23 +189,20 @@
         font-weight: 700;
         margin-bottom: 6px;
       }
+
       .sub-title {
         font-size: 14px;
         color: #94a3b8;
         margin-bottom: 30px;
       }
 
-      .login-form {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-
       .input-group {
         position: relative;
         display: flex;
         align-items: center;
+        margin-bottom: 16px;
       }
+
       .input-group input {
         width: 100%;
         padding: 16px 16px 16px 48px;
@@ -219,12 +212,14 @@
         font-size: 16px;
         outline: none;
       }
+
       .input-icon {
         position: absolute;
         left: 18px;
         color: #94a3b8;
         font-size: 18px;
       }
+
       .toggle-password {
         position: absolute;
         right: 18px;
@@ -252,18 +247,21 @@
         margin-top: 15px;
         font-size: 13px;
       }
+
       .remember-me {
         display: flex;
         align-items: center;
         color: #64748b;
         cursor: pointer;
       }
+
       .remember-me input {
         margin-right: 8px;
         accent-color: #539dd1;
         width: 16px;
         height: 16px;
       }
+
       .forgot-password {
         color: #539dd1;
         text-decoration: none;
@@ -271,7 +269,7 @@
 
       /* =========================================
            3. Responsive สำหรับเปิดในหน้าจอมือถือจริง
-           ========================================= */
+         ========================================= */
       @media (max-width: 480px) {
         body {
           background-color: #dbeafe;
@@ -288,6 +286,8 @@
         }
       }
     </style>
+
+    <script src="./js/login.js"></script>
   </head>
   <body>
     <div class="app-container">
@@ -303,22 +303,94 @@
           <span class="loading-text">กำลังโหลด...</span>
         </div>
       </div>
+
+      <div class="main-content">
+        <div class="header-section">
+          <div class="logo-box">
+            <img src="./img/Logo_Pose.png" alt="logo_pose" width="100%" />
+          </div>
+          <p class="brand-subtext">Professional Prevention Infection Control</p>
+        </div>
+
+        <div class="login-card">
+          <h1 class="main-title">เข้าสู่ระบบ</h1>
+          <p class="sub-title">ระบบห้องชั่งน้ำหนักสารเคมี</p>
+
+          <form id="login-form">
+            <div class="input-group">
+              <i class="fa-regular fa-user input-icon"></i>
+              <input
+                type="text"
+                id="username"
+                placeholder="ชื่อผู้ใช้"
+                required
+              />
+            </div>
+
+            <div class="input-group">
+              <i class="fa-solid fa-lock input-icon"></i>
+              <input
+                type="password"
+                id="password"
+                placeholder="รหัสผ่าน"
+                class="password-input"
+                required
+              />
+              <i class="fa-regular fa-eye toggle-password"></i>
+            </div>
+
+            <button type="submit" class="submit-btn">เข้าสู่ระบบ</button>
+
+            <div class="form-footer">
+              <label class="remember-me">
+                <input type="checkbox" id="rememberMe" checked />
+                <span class="checkmark"></span>
+                จดจำฉัน
+              </label>
+              <a
+                href="#"
+                class="forgot-password"
+                onclick="alert('กรุณาติดต่อฝ่าย IT')"
+                >ลืมรหัสผ่าน?</a
+              >
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
 
     <script>
-      // ใช้คำสั่ง DOMContentLoaded เพื่อเช็คว่าโครงสร้าง DOM โหลดเสร็จเรียบร้อยแล้ว
       document.addEventListener("DOMContentLoaded", function () {
+        // 1. เรียกใช้งาน requireAuth จากสคริปต์หลัก (ถ้ามีการใช้งานล็อกอินค้างไว้)
+        if (typeof requireAuth === "function") {
+          requireAuth(true);
+        }
+
+        // 2. ควบคุมการหน่วงเวลา Splash Screen 1 วินาทีแล้วจางหาย
         setTimeout(function () {
           const splash = document.getElementById("splashScreen");
-
           if (splash) {
             splash.classList.add("fade-out");
-            // รอให้ animation จบก่อนค่อยเปลี่ยนหน้า
-            setTimeout(() => {
-              window.location.href = "login.html";
-            }, 500); // ต้องตรงกับ transition 0.5s
           }
         }, 1000);
+
+        // 3. แถมระบบซ่อน/แสดงรหัสผ่าน (Toggle Password) ให้ใช้งานได้จริง
+        const togglePassword = document.querySelector(".toggle-password");
+        const passwordInput = document.querySelector("#password");
+
+        if (togglePassword && passwordInput) {
+          togglePassword.addEventListener("click", function () {
+            const type =
+              passwordInput.getAttribute("type") === "password"
+                ? "text"
+                : "password";
+            passwordInput.setAttribute("type", type);
+
+            // เปลี่ยนไอคอนดวงตา
+            this.classList.toggle("fa-eye");
+            this.classList.toggle("fa-eye-slash");
+          });
+        }
       });
     </script>
   </body>

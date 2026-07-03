@@ -54,10 +54,10 @@ async function requireAuth(redirectIfLoggedIn = false) {
     }
 
     if (!redirectIfLoggedIn && !isLoggedIn) {
-      window.location.href = "/login.html";
+      window.location.href = "/";
     }
   } catch (err) {
-    window.location.href = "/login.html";
+    window.location.href = "/";
   }
 }
 

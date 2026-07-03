@@ -8,7 +8,7 @@ async function logout() {
       credentials: "include",
     });
 
-    window.location.href = "/login.html";
+    window.location.href = "/";
   } catch (err) {
     console.error(err);
   }
