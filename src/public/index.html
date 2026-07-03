@@ -72,6 +72,7 @@
       .splash-screen.fade-out {
         opacity: 0;
         visibility: hidden;
+        pointer-events: none;
       }
 
       /* กล่องโลโก้จำลอง */
@@ -118,17 +119,20 @@
         position: relative;
       }
 
-      /* แอนิเมชันวิ่งซ้ายไปขวาขัดตาทัพตอนโหลด */
-      .progress-bar::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 0;
+      .progress-bar {
+        width: 90px;
+        height: 4px;
+        background-color: #bfdbfe;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
         height: 100%;
-        width: 50%;
+        width: 0%;
         background-color: #3b82f6;
         border-radius: 2px;
-        animation: loading-run 1.5s infinite linear;
+        transition: width 0.1s linear;
       }
 
       @keyframes loading-run {
@@ -299,7 +303,9 @@
         <p class="splash-subtitle">Pose Health Care Co., Ltd.</p>
 
         <div class="splash-footer">
-          <div class="progress-bar"></div>
+          <div class="progress-bar">
+            <div class="progress-fill"></div>
+          </div>
           <span class="loading-text">กำลังโหลด...</span>
         </div>
       </div>
@@ -361,36 +367,44 @@
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        // 1. เรียกใช้งาน requireAuth จากสคริปต์หลัก (ถ้ามีการใช้งานล็อกอินค้างไว้)
-        if (typeof requireAuth === "function") {
-          requireAuth(true);
-        }
-
-        // 2. ควบคุมการหน่วงเวลา Splash Screen 1 วินาทีแล้วจางหาย
-        setTimeout(function () {
-          const splash = document.getElementById("splashScreen");
-          if (splash) {
-            splash.classList.add("fade-out");
-          }
-        }, 1000);
-
-        // 3. แถมระบบซ่อน/แสดงรหัสผ่าน (Toggle Password) ให้ใช้งานได้จริง
-        const togglePassword = document.querySelector(".toggle-password");
-        const passwordInput = document.querySelector("#password");
+        const togglePassword = document.getElementById("toggle-password");
+        const passwordInput = document.getElementById("password");
 
         if (togglePassword && passwordInput) {
           togglePassword.addEventListener("click", function () {
-            const type =
-              passwordInput.getAttribute("type") === "password"
-                ? "text"
-                : "password";
-            passwordInput.setAttribute("type", type);
+            const show = passwordInput.type === "password";
 
-            // เปลี่ยนไอคอนดวงตา
-            this.classList.toggle("fa-eye");
-            this.classList.toggle("fa-eye-slash");
+            console.log("show", show);
+
+            passwordInput.type = show ? "text" : "password";
+
+            this.classList.remove("fa-eye", "fa-eye-slash");
+            this.classList.add(show ? "fa-eye-slash" : "fa-eye");
           });
         }
+
+        let progress = 0;
+        const fill = document.querySelector(".progress-fill");
+        const splash = document.getElementById("splashScreen");
+
+        const interval = setInterval(() => {
+          progress += Math.floor(Math.random() * 8) + 2;
+
+          if (progress >= 100) {
+            progress = 100;
+            fill.style.width = "100%";
+            clearInterval(interval);
+
+            // 👇 fade out เมื่อเต็มจริง
+            setTimeout(() => {
+              splash.classList.add("fade-out");
+              splash.style.zIndex = "-1";
+            }, 300);
+            return;
+          }
+
+          fill.style.width = progress + "%";
+        }, 80);
       });
     </script>
   </body>
