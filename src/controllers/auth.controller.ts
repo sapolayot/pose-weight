@@ -7,8 +7,20 @@ export async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const user = await service.login(req.body);
 
-    // 🔥 เก็บ session
-    (req as any).session.user = user;
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid username or password",
+      });
+    }
+
+    req.session.user = user;
+
+    if (req.body.rememberMe) {
+      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30; // 30 วัน
+    } else {
+      req.session.cookie.expires = undefined;
+    }
 
     res.json({
       success: true,
@@ -20,8 +32,16 @@ export async function login(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export function me(req: Request, res: Response) {
+  if (!req.session.user) {
+    return res.status(401).json({ message: "not logged in" });
+  }
+
+  res.json(req.session.user);
+}
+
 export function logout(req: Request, res: Response) {
-  (req as any).session.destroy(() => {
+  req.session.destroy(() => {
     res.json({
       success: true,
       message: "Logged out",

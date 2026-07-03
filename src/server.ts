@@ -1,4 +1,4 @@
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
 import dotenv from "dotenv";
 import express, { Application, NextFunction, Request, Response } from "express";
 import session from "express-session";
@@ -14,10 +14,28 @@ const PORT = process.env.PORT || 3000;
 
 const app: Application = express();
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  // "https://yourdomain.com"
+];
+
+const corsOptions: CorsOptions = {
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void,
+  ) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+};
+
 /**
  * Middleware
  */
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

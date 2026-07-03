@@ -11,7 +11,7 @@ export default class AuthService {
       throw new Error("Invalid username or password");
     }
 
-    if ((user as any).password !== request.password) {
+    if (user.password !== request.password) {
       throw new Error("Invalid username or password");
     }
 
