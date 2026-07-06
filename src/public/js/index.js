@@ -1,8 +1,5 @@
-// public/js/app.js
-
 const API_URL = "http://localhost:3000/api";
 
-// ===== LOGIN =====
 async function login() {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
@@ -27,7 +24,6 @@ async function login() {
 
     alert("Login success");
 
-    // ===== จำ username (optional UI convenience)
     if (rememberMe) {
       localStorage.setItem("rememberedUser", username);
     } else {
@@ -40,7 +36,6 @@ async function login() {
   }
 }
 
-// ===== CHECK SESSION =====
 async function requireAuth(redirectIfLoggedIn = false) {
   try {
     const res = await fetch(`${API_URL}/me`, {
@@ -61,9 +56,7 @@ async function requireAuth(redirectIfLoggedIn = false) {
   }
 }
 
-// ===== EVENT HOOK =====
 document.addEventListener("DOMContentLoaded", () => {
-  //form submit
   const loginForm = document.getElementById("login-form");
 
   if (loginForm) {
@@ -72,23 +65,21 @@ document.addEventListener("DOMContentLoaded", () => {
       login();
     });
   }
-  //toggle visible input
+
   const passwordInput = document.getElementById("password");
   const toggleIcon = document.querySelector(".toggle-password");
 
-  if (toggleIcon) {
+  if (toggleIcon && passwordInput) {
     toggleIcon.addEventListener("click", () => {
       const isHidden = passwordInput.type === "password";
 
       passwordInput.type = isHidden ? "text" : "password";
 
-      // เปลี่ยน icon (ถ้าใช้ Font Awesome)
       toggleIcon.classList.toggle("fa-eye");
       toggleIcon.classList.toggle("fa-eye-slash");
     });
   }
 
-  //remember
   const savedUser = localStorage.getItem("rememberedUser");
   if (savedUser) {
     const usernameInput = document.getElementById("username");

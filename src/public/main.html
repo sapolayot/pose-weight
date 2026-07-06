@@ -4,175 +4,187 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PHC Weighing — M1 Prototype v3</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap"
       rel="stylesheet"
     />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <link rel="stylesheet" href="./css/global.css" />
+    <link rel="stylesheet" href="./css/splash.css" />
     <link rel="stylesheet" href="./css/main.css" />
   </head>
   <body>
     <div class="desktop-wrapper">
       <div class="mobile-container">
-        <header class="app-header">
-          <div class="header-top">
-            <h1>รายการผลิต</h1>
-            <button class="logout-btn">
-              <i class="fa-solid fa-right-from-bracket" onclick="logout()"></i>
-            </button>
-          </div>
-          <p class="welcome-text" id="welcome-text"></p>
-        </header>
+        <div id="listView" class="list-view">
+          <header class="app-header">
+            <div class="header-top">
+              <h1>รายการผลิต</h1>
+              <button class="logout-btn" type="button">
+                <i
+                  class="fa-solid fa-right-from-bracket"
+                  onclick="logout()"
+                ></i>
+              </button>
+            </div>
+            <p class="welcome-text" id="welcome-text"></p>
+          </header>
 
-        <main class="app-content">
-          <div class="search-box">
-            <i class="fa-solid fa-magnifying-glass search-icon"></i>
-            <input type="text" placeholder="ค้นหา รหัส / ชื่อ / Lot..." />
-          </div>
-
-          <div class="filter-tabs">
-            <button class="tab-btn active">ทั้งหมด</button>
-            <button class="tab-btn">ค้างเบิก</button>
-            <button class="tab-btn">เสร็จแล้ว</button>
-          </div>
-
-          <div class="production-list">
-            <div
-              class="list-item"
-              data-id="C01"
-              data-name="C01: POSE LIQUID SOAP"
-              data-lot="C01160626B"
-              data-doc="00012606-0076"
-              data-date="09-06-2026"
-              data-amount="800.00"
-              data-unit="Kg."
-            >
-              <div class="item-icon">
-                <i class="fa-regular fa-file-lines"></i>
-              </div>
-              <div class="item-details">
-                <h3>C01: POSE LIQUID SOAP</h3>
-                <p>Lot No. C01160626B</p>
-                <p class="doc-no">Doc. 00012606-0076</p>
-              </div>
-              <div class="item-stats">
-                <span class="date">09-06-2026</span>
-                <span class="amount">800.00</span>
-                <span class="unit">Kg.</span>
-              </div>
+          <main class="app-content">
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" placeholder="ค้นหา รหัส / ชื่อ / Lot..." />
             </div>
 
-            <div
-              class="list-item"
-              data-id="D42"
-              data-name="D42: POSE-CLORITE 10%"
-              data-lot="D42150626A"
-              data-doc="00012606-0075"
-              data-date="09-06-2026"
-              data-amount="126.69"
-              data-unit="Kg."
-            >
-              <div class="item-icon">
-                <i class="fa-regular fa-file-lines"></i>
-              </div>
-              <div class="item-details">
-                <h3>D42: POSE-CLORITE 10%</h3>
-                <p>Lot No. D42150626A</p>
-                <p class="doc-no">Doc. 00012606-0075</p>
-              </div>
-              <div class="item-stats">
-                <span class="date">09-06-2026</span>
-                <span class="amount">126.69</span>
-                <span class="unit">Kg.</span>
-              </div>
+            <div class="filter-tabs">
+              <button class="tab-btn active" type="button">ทั้งหมด</button>
+              <button class="tab-btn" type="button">ค้างเบิก</button>
+              <button class="tab-btn" type="button">เสร็จแล้ว</button>
             </div>
 
-            <div
-              class="list-item"
-              data-id="D27-1"
-              data-name="D27: Q-BAC 2A"
-              data-lot="D27190626A"
-              data-doc="00012606-0074"
-              data-date="13-06-2026"
-              data-amount="2,000.00"
-              data-unit="Lt."
-            >
-              <div class="item-icon">
-                <i class="fa-regular fa-file-lines"></i>
+            <div class="production-list">
+              <div
+                class="list-item"
+                data-id="C01"
+                data-name="C01: POSE LIQUID SOAP"
+                data-lot="C01160626B"
+                data-doc="00012606-0076"
+                data-date="09-06-2026"
+                data-amount="800.00"
+                data-unit="Kg."
+              >
+                <div class="item-icon">
+                  <i class="fa-regular fa-file-lines"></i>
+                </div>
+                <div class="item-details">
+                  <h3>C01: POSE LIQUID SOAP</h3>
+                  <p>Lot No. C01160626B</p>
+                  <p class="doc-no">Doc. 00012606-0076</p>
+                </div>
+                <div class="item-stats">
+                  <span class="date">09-06-2026</span>
+                  <span class="amount">800.00</span>
+                  <span class="unit">Kg.</span>
+                </div>
               </div>
-              <div class="item-details">
-                <h3>D27: Q-BAC 2A</h3>
-                <p>Lot No. D27190626A</p>
-                <p class="doc-no">Doc. 00012606-0074</p>
-              </div>
-              <div class="item-stats">
-                <span class="date">13-06-2026</span>
-                <span class="amount">2,000.00</span>
-                <span class="unit">Lt.</span>
-              </div>
-            </div>
 
-            <div
-              class="list-item"
-              data-id="D27-2"
-              data-name="D27: Q-BAC 2A"
-              data-lot="D27180626A"
-              data-doc="00012606-0073"
-              data-date="09-06-2026"
-              data-amount="2,000.00"
-              data-unit="Lt."
-            >
-              <div class="item-icon">
-                <i class="fa-regular fa-file-lines"></i>
+              <div
+                class="list-item"
+                data-id="D42"
+                data-name="D42: POSE-CLORITE 10%"
+                data-lot="D42150626A"
+                data-doc="00012606-0075"
+                data-date="09-06-2026"
+                data-amount="126.69"
+                data-unit="Kg."
+              >
+                <div class="item-icon">
+                  <i class="fa-regular fa-file-lines"></i>
+                </div>
+                <div class="item-details">
+                  <h3>D42: POSE-CLORITE 10%</h3>
+                  <p>Lot No. D42150626A</p>
+                  <p class="doc-no">Doc. 00012606-0075</p>
+                </div>
+                <div class="item-stats">
+                  <span class="date">09-06-2026</span>
+                  <span class="amount">126.69</span>
+                  <span class="unit">Kg.</span>
+                </div>
               </div>
-              <div class="item-details">
-                <h3>D27: Q-BAC 2A</h3>
-                <p>Lot No. D27180626A</p>
-                <p class="doc-no">Doc. 00012606-0073</p>
+
+              <div
+                class="list-item"
+                data-id="D27-1"
+                data-name="D27: Q-BAC 2A"
+                data-lot="D27190626A"
+                data-doc="00012606-0074"
+                data-date="13-06-2026"
+                data-amount="2,000.00"
+                data-unit="Lt."
+              >
+                <div class="item-icon">
+                  <i class="fa-regular fa-file-lines"></i>
+                </div>
+                <div class="item-details">
+                  <h3>D27: Q-BAC 2A</h3>
+                  <p>Lot No. D27190626A</p>
+                  <p class="doc-no">Doc. 00012606-0074</p>
+                </div>
+                <div class="item-stats">
+                  <span class="date">13-06-2026</span>
+                  <span class="amount">2,000.00</span>
+                  <span class="unit">Lt.</span>
+                </div>
               </div>
-              <div class="item-stats">
-                <span class="date">09-06-2026</span>
-                <span class="amount">2,000.00</span>
-                <span class="unit">Lt.</span>
-              </div>
-            </div>
-          </div>
-        </main>
 
-        <div id="detailModal" class="modal-overlay">
-          <div class="modal-content">
-            <button class="close-modal-btn" id="closeModal">&times;</button>
-            <div class="modal-body">
-              <div class="modal-header-icon">
-                <i class="fa-regular fa-file-lines fa-2x"></i>
-              </div>
-              <h2 id="modalTitle">ชื่อรายการผลิต</h2>
-              <hr />
-              <div class="modal-info-grid">
-                <div class="info-label">Lot No.:</div>
-                <div id="modalLot" class="info-value">-</div>
-
-                <div class="info-label">Doc No.:</div>
-                <div id="modalDoc" class="info-value">-</div>
-
-                <div class="info-label">วันที่ผลิต:</div>
-                <div id="modalDate" class="info-value">-</div>
-
-                <div class="info-label">จำนวน:</div>
-                <div class="info-valueHighlight">
-                  <span id="modalAmount">0.00</span>
-                  <span id="modalUnit"></span>
+              <div
+                class="list-item"
+                data-id="D27-2"
+                data-name="D27: Q-BAC 2A"
+                data-lot="D27180626A"
+                data-doc="00012606-0073"
+                data-date="09-06-2026"
+                data-amount="2,000.00"
+                data-unit="Lt."
+              >
+                <div class="item-icon">
+                  <i class="fa-regular fa-file-lines"></i>
+                </div>
+                <div class="item-details">
+                  <h3>D27: Q-BAC 2A</h3>
+                  <p>Lot No. D27180626A</p>
+                  <p class="doc-no">Doc. 00012606-0073</p>
+                </div>
+                <div class="item-stats">
+                  <span class="date">09-06-2026</span>
+                  <span class="amount">2,000.00</span>
+                  <span class="unit">Lt.</span>
                 </div>
               </div>
             </div>
+          </main>
+        </div>
+
+        <div id="withdrawPanel" class="withdraw-panel">
+          <header class="withdraw-header">
+            <button
+              class="back-btn"
+              id="backToList"
+              type="button"
+              aria-label="กลับ"
+            >
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <p class="withdraw-label">เบิกเคมี และ บรรจุภัณฑ์</p>
+            <h2 id="withdrawTitle">C01: POSE LIQUID SOAP</h2>
+            <p id="withdrawMeta">จำนวน: 800.00 Kg. · Lot: C01160626B</p>
+          </header>
+
+          <div class="withdraw-tabs">
+            <button class="withdraw-tab active" type="button" data-filter="all">
+              ทั้งหมด
+            </button>
+            <button class="withdraw-tab" type="button" data-filter="R">
+              เคมี (R)
+            </button>
+            <button class="withdraw-tab" type="button" data-filter="P">
+              บรรจุภัณฑ์ (P)
+            </button>
           </div>
+
+          <div class="withdraw-content" id="withdrawContent"></div>
         </div>
       </div>
     </div>
 
+    <script src="./js/splash.js"></script>
     <script src="./js/main.js"></script>
   </body>
 </html>

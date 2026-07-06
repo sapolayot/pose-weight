@@ -1,0 +1,75 @@
+:root {
+  --phone-width: 360px;
+  --phone-height: 760px;
+  --phone-border: 12px solid #1a1a1a;
+  --phone-radius: 40px;
+  --phone-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  --body-bg: #f0f4f8;
+  --mobile-body-bg: #dbeafe;
+}
+
+/* --- Reset & Layout --- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Sarabun", sans-serif;
+}
+
+body {
+  background-color: var(--body-bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.desktop-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
+}
+
+/* --- Phone Frame (ใช้ร่วมทุกหน้า) --- */
+.app-container,
+.mobile-container {
+  width: var(--phone-width);
+  height: var(--phone-height);
+  border-radius: var(--phone-radius);
+  box-shadow: var(--phone-shadow);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: var(--phone-border);
+}
+
+/* --- Responsive: หน้าจอมือถือจริง --- */
+@media (max-width: 480px) {
+  body {
+    background-color: var(--mobile-body-bg);
+  }
+
+  .desktop-wrapper {
+    padding: 0;
+  }
+
+  .app-container,
+  .mobile-container {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+
+  .login-card {
+    padding-bottom: env(safe-area-inset-bottom, 30px);
+  }
+
+  .app-content {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+}
