@@ -1,9 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 
-export function isLoggedIn(req: Request, res: Response, next: NextFunction) {
-  const sessionUser = (req as any).session?.user;
-
-  if (!sessionUser) {
+export function authMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (!req.session.user) {
     return res.status(401).json({
       success: false,
       message: "Unauthorized",
@@ -13,13 +15,5 @@ export function isLoggedIn(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-export function authMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  if (!req.session.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  next();
-}
+/** @deprecated ใช้ authMiddleware แทน */
+export const isLoggedIn = authMiddleware;

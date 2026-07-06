@@ -5,6 +5,7 @@ import session from "express-session";
 import path from "path";
 // import loginRoutes from "./routes/login.routes";
 import authRoutes from "./routes/auth.routes";
+import { pageAuthMiddleware } from "./middlewares/page-auth.middleware";
 
 import { testConnection } from "./config/database.config";
 
@@ -30,6 +31,7 @@ const corsOptions: CorsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
+  credentials: true,
 };
 
 /**
@@ -41,21 +43,21 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   session({
+    name: "connect.sid",
     secret: process.env.SESSION_SECRET || "secret",
     resave: false,
     saveUninitialized: false,
-    cookie: { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 }, // 1 day
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 1000 * 60 * 60 * 24,
+    },
   }),
 );
 
 /**
- * Static Files
- * http://localhost:3000/
- */
-app.use(express.static(path.join(__dirname, "./public")));
-
-/**
- * Health Check
+ * API Routes
  */
 app.get("/api/health", (req: Request, res: Response) => {
   res.json({
@@ -64,11 +66,19 @@ app.get("/api/health", (req: Request, res: Response) => {
   });
 });
 
-/**
- * Routes
- */
 // app.use("/api/login", loginRoutes);
 app.use("/api", authRoutes);
+
+/**
+ * Page Auth Middleware (HTML pages)
+ */
+app.use(pageAuthMiddleware);
+
+/**
+ * Static Files
+ * http://localhost:3000/
+ */
+app.use(express.static(path.join(__dirname, "./public")));
 
 /**
  * 404

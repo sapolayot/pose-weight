@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000/api";
+const API_URL = "/api";
 
 async function login() {
   const username = document.getElementById("username").value;
@@ -22,8 +22,6 @@ async function login() {
       return;
     }
 
-    alert("Login success");
-
     if (rememberMe) {
       localStorage.setItem("rememberedUser", username);
     } else {
@@ -33,26 +31,6 @@ async function login() {
     window.location.href = "/main.html";
   } catch (err) {
     console.error(err);
-  }
-}
-
-async function requireAuth(redirectIfLoggedIn = false) {
-  try {
-    const res = await fetch(`${API_URL}/me`, {
-      credentials: "include",
-    });
-
-    const isLoggedIn = res.ok;
-
-    if (redirectIfLoggedIn && isLoggedIn) {
-      window.location.href = "/main.html";
-    }
-
-    if (!redirectIfLoggedIn && !isLoggedIn) {
-      window.location.href = "/";
-    }
-  } catch (err) {
-    window.location.href = "/";
   }
 }
 
