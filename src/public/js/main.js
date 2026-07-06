@@ -3,12 +3,15 @@ const API_URL = "http://localhost:3000/api";
 // ===== LOGOUT =====
 async function logout() {
   try {
-    await fetch(`${API_URL}/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
+    const proceed = confirm("ยืนยันออกจากระบบ?");
+    if (proceed) {
+      await fetch(`${API_URL}/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
 
-    window.location.href = "/";
+      window.location.href = "/";
+    }
   } catch (err) {
     console.error(err);
   }
