@@ -192,9 +192,7 @@ function buildPrintTagData({
   const net = isP ? amount : Number((amount * 0.998).toFixed(4));
   const gross = isP ? amount : Number((net + 125.3).toFixed(4));
   const materialLot = lot || code || batchNo || "—";
-  const materialCode = round
-    ? `${itemName} · รอบที่ ${round}`
-    : itemName;
+  const materialCode = round ? `${itemName} · รอบที่ ${round}` : itemName;
 
   return {
     productionDate: productionDate || "—",
@@ -219,7 +217,8 @@ function buildPrintTagData({
 }
 
 function populatePrintPreview(data) {
-  document.getElementById("tagProductionDate").textContent = data.productionDate;
+  document.getElementById("tagProductionDate").textContent =
+    data.productionDate;
   document.getElementById("tagBatchNo").textContent = data.batchNo;
   document.getElementById("tagQrCode").textContent = data.qrCode;
   document.getElementById("tagProductName").textContent = data.productName;
@@ -699,7 +698,9 @@ function renderScaleStep(stepId) {
 function renderContainerStep(step) {
   const draft = getStepDraft(step.id);
   const unit = step.unit || "g";
-  const value = draft.recorded ? (draft.weight ?? step.mockWeight ?? 125.3) : null;
+  const value = draft.recorded
+    ? (draft.weight ?? step.mockWeight ?? 125.3)
+    : null;
 
   return `
     <div class="weigh-step-body">
@@ -999,19 +1000,23 @@ function bindWeighStepEvents() {
     });
   });
 
-  document.querySelectorAll(".scale-option-btn, .weigh-action-btn[data-scale]").forEach((btn) => {
-    btn.addEventListener("click", (event) => {
-      event.stopPropagation();
-      weighState.scaleAlert = null;
-      completeStep(Number(btn.dataset.step), { scale: btn.dataset.scale });
+  document
+    .querySelectorAll(".scale-option-btn, .weigh-action-btn[data-scale]")
+    .forEach((btn) => {
+      btn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        weighState.scaleAlert = null;
+        completeStep(Number(btn.dataset.step), { scale: btn.dataset.scale });
+      });
     });
-  });
 
   document.querySelectorAll(".weigh-record-btn").forEach((btn) => {
     btn.addEventListener("click", (event) => {
       event.stopPropagation();
       const stepId = Number(btn.dataset.step);
-      const step = getWorkflow(weighState.type).steps.find((item) => item.id === stepId);
+      const step = getWorkflow(weighState.type).steps.find(
+        (item) => item.id === stepId,
+      );
       const draft = getStepDraft(stepId);
 
       if (step.kind === "container") {
@@ -1061,7 +1066,9 @@ function bindWeighStepEvents() {
 
       const stepId = Number(btn.dataset.step);
       const action = btn.dataset.stepAction;
-      const step = getWorkflow(weighState.type).steps.find((item) => item.id === stepId);
+      const step = getWorkflow(weighState.type).steps.find(
+        (item) => item.id === stepId,
+      );
       const draft = getStepDraft(stepId);
 
       if (action === "scale_mismatch") {
@@ -1145,8 +1152,7 @@ function handleScanInput(value) {
   if (scanStep.kind === "scale") {
     const matchedScale = SCALE_OPTIONS.find(
       (scale) =>
-        value.trim().includes(scale.id) ||
-        scale.id.includes(value.trim()),
+        value.trim().includes(scale.id) || scale.id.includes(value.trim()),
     );
     if (matchedScale) {
       weighState.scaleAlert = null;

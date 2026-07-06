@@ -413,7 +413,8 @@ function renderWithdrawContent(productId, filter = "all") {
 
 function openWithdrawPanel(item) {
   const panel = document.getElementById("withdrawPanel");
-  const productId = item.getAttribute("data-id");
+  const productId =
+    item.getAttribute("data-product-code") || item.getAttribute("data-id");
   const name = item.getAttribute("data-name");
   const lot = item.getAttribute("data-lot");
   const amount = item.getAttribute("data-amount");
@@ -507,45 +508,117 @@ function setWithdrawFilter(filter) {
   );
 }
 
-function getListItemSearchText(item) {
-  return [
-    item.dataset.id,
-    item.dataset.name,
-    item.dataset.lot,
-    item.dataset.doc,
-    item.dataset.date,
-    item.dataset.amount,
-    item.dataset.unit,
-    item.textContent,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-function filterProductionList() {
-  const query =
-    document.getElementById("productionSearch")?.value.trim().toLowerCase() ||
-    "";
-  const items = document.querySelectorAll(".production-list .list-item");
-  const emptyEl = document.getElementById("productionEmpty");
-  let visibleCount = 0;
+function renderProductionListItem(item) {
+  return `
+    <div
+      class="list-item"
+      data-id="${escapeHtml(item.id)}"
+      data-product-code="${escapeHtml(item.productCode)}"
+      data-name="${escapeHtml(item.name)}"
+      data-lot="${escapeHtml(item.lot)}"
+      data-doc="${escapeHtml(item.doc)}"
+      data-date="${escapeHtml(item.date)}"
+      data-amount="${escapeHtml(item.amount)}"
+      data-unit="${escapeHtml(item.unit)}"
+      data-display-status="${escapeHtml(item.displayStatus)}"
+    >
+      <div class="item-icon">
+        <i class="fa-regular fa-file-lines"></i>
+      </div>
+      <div class="item-details">
+        <h3>${escapeHtml(item.name)}</h3>
+        <p>Lot No. ${escapeHtml(item.lot)}</p>
+        <p class="doc-no">Doc. ${escapeHtml(item.doc)}</p>
+      </div>
+      <div class="item-stats">
+        <span class="date">${escapeHtml(item.date)}</span>
+        <span class="amount">${escapeHtml(item.amount)}</span>
+        <span class="unit">${escapeHtml(item.unit)}</span>
+      </div>
+    </div>
+  `;
+}
 
-  items.forEach((item) => {
-    const matches = !query || getListItemSearchText(item).includes(query);
-    item.classList.toggle("list-item--hidden", !matches);
-    if (matches) visibleCount += 1;
+function bindProductionListItems() {
+  document.querySelectorAll(".production-list .list-item").forEach((item) => {
+    item.addEventListener("click", () => openWithdrawPanel(item));
   });
+}
 
+let productionSearchTimer = null;
+
+async function loadProductionList(query = "") {
+  const listEl = document.getElementById("productionList");
+  const emptyEl = document.getElementById("productionEmpty");
+  const loadingEl = document.getElementById("productionLoading");
+
+  if (!listEl) return;
+
+  if (loadingEl) loadingEl.hidden = false;
   if (emptyEl) {
-    emptyEl.hidden = visibleCount > 0;
+    emptyEl.textContent = "ไม่พบรายการที่ค้นหา";
+    emptyEl.hidden = true;
+  }
+
+  try {
+    const params = new URLSearchParams();
+    if (query.trim()) {
+      params.set("q", query.trim());
+    }
+
+    const response = await fetch(
+      `${API_URL}/wh-stock-transmit-iso?${params.toString()}`,
+      { credentials: "include" },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to load production list");
+    }
+
+    const payload = await response.json();
+    const items = Array.isArray(payload.data) ? payload.data : [];
+
+    listEl.querySelectorAll(".list-item").forEach((item) => item.remove());
+
+    if (items.length === 0) {
+      if (emptyEl) emptyEl.hidden = false;
+    } else {
+      listEl.insertAdjacentHTML(
+        "beforeend",
+        items.map((item) => renderProductionListItem(item)).join(""),
+      );
+      bindProductionListItems();
+    }
+  } catch (error) {
+    console.error(error);
+    if (emptyEl) {
+      emptyEl.textContent = "ไม่สามารถโหลดรายการผลิตได้";
+      emptyEl.hidden = false;
+    }
+  } finally {
+    if (loadingEl) loadingEl.hidden = true;
   }
 }
 
+function handleProductionSearchInput() {
+  clearTimeout(productionSearchTimer);
+  productionSearchTimer = setTimeout(() => {
+    const query =
+      document.getElementById("productionSearch")?.value.trim() || "";
+    loadProductionList(query);
+  }, 300);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".list-item").forEach((item) => {
-    item.addEventListener("click", () => openWithdrawPanel(item));
-  });
+  loadProductionList();
 
   document
     .getElementById("backToList")
@@ -611,7 +684,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document
     .getElementById("productionSearch")
-    ?.addEventListener("input", filterProductionList);
+    ?.addEventListener("input", handleProductionSearchInput);
 
   initWelcomeText();
 });
