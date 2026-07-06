@@ -252,7 +252,15 @@ function renderCompletedCard(item, type) {
   }
 
   return `
-    <div class="material-card material-card--completed" data-type="${type}">
+    <div
+      class="material-card material-card--completed"
+      data-type="${type}"
+      data-item-name="${item.name}"
+      data-item-code="${item.code || ""}"
+      data-item-lot="${item.lot || ""}"
+      data-item-amount="${item.withdrawn}"
+      data-item-unit="${item.unit}"
+    >
       <div class="material-card-main">
         <div class="material-icon material-icon--check">
           <i class="fa-solid fa-check"></i>
@@ -280,7 +288,16 @@ function renderPartialCard(item, type) {
         ].filter(Boolean);
 
         return `
-          <div class="round-item round-item--done">
+          <div
+            class="round-item round-item--done"
+            data-type="${type}"
+            data-item-name="${item.name}"
+            data-round="${round.round}"
+            data-item-lot="${round.lot || ""}"
+            data-item-code="${round.code || ""}"
+            data-item-amount="${round.amount}"
+            data-item-unit="${round.unit}"
+          >
             <span class="round-dot round-dot--green"></span>
             <div class="round-info">
               <span class="round-label">รอบที่ ${round.round}</span>
@@ -409,6 +426,9 @@ function openWithdrawPanel(item) {
   panel.dataset.productId = productId;
   panel.dataset.batchLot = lot;
   panel.dataset.docNo = item.getAttribute("data-doc") || "";
+  panel.dataset.batchSize = amount || "";
+  panel.dataset.batchUnit = unit || "";
+  panel.dataset.productionDate = item.getAttribute("data-date") || "";
 
   panel.querySelectorAll(".withdraw-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.filter === "all");
@@ -429,7 +449,44 @@ function getWithdrawProductContext() {
     productName: document.getElementById("withdrawTitle").textContent,
     batchNo: panel.dataset.batchLot || "",
     docNo: panel.dataset.docNo || "PB-BL03.3",
+    batchSize: panel.dataset.batchSize || "",
+    batchUnit: panel.dataset.batchUnit || "",
+    productionDate: panel.dataset.productionDate || "",
   };
+}
+
+function collectWithdrawPrintContext(printBtn) {
+  const roundItem = printBtn.closest(".round-item--done");
+  const completedCard = printBtn.closest(".material-card--completed");
+  const product = getWithdrawProductContext();
+
+  if (roundItem) {
+    return {
+      type: roundItem.dataset.type,
+      itemName: roundItem.dataset.itemName,
+      amount: Number(roundItem.dataset.itemAmount),
+      unit: roundItem.dataset.itemUnit,
+      round: Number(roundItem.dataset.round),
+      lot: roundItem.dataset.itemLot,
+      code: roundItem.dataset.itemCode,
+      ...product,
+    };
+  }
+
+  if (completedCard) {
+    return {
+      type: completedCard.dataset.type,
+      itemName: completedCard.dataset.itemName,
+      amount: Number(completedCard.dataset.itemAmount),
+      unit: completedCard.dataset.itemUnit,
+      round: null,
+      lot: completedCard.dataset.itemLot,
+      code: completedCard.dataset.itemCode,
+      ...product,
+    };
+  }
+
+  return null;
 }
 
 function closeWithdrawPanel() {
@@ -450,6 +507,41 @@ function setWithdrawFilter(filter) {
   );
 }
 
+function getListItemSearchText(item) {
+  return [
+    item.dataset.id,
+    item.dataset.name,
+    item.dataset.lot,
+    item.dataset.doc,
+    item.dataset.date,
+    item.dataset.amount,
+    item.dataset.unit,
+    item.textContent,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function filterProductionList() {
+  const query =
+    document.getElementById("productionSearch")?.value.trim().toLowerCase() ||
+    "";
+  const items = document.querySelectorAll(".production-list .list-item");
+  const emptyEl = document.getElementById("productionEmpty");
+  let visibleCount = 0;
+
+  items.forEach((item) => {
+    const matches = !query || getListItemSearchText(item).includes(query);
+    item.classList.toggle("list-item--hidden", !matches);
+    if (matches) visibleCount += 1;
+  });
+
+  if (emptyEl) {
+    emptyEl.hidden = visibleCount > 0;
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".list-item").forEach((item) => {
     item.addEventListener("click", () => openWithdrawPanel(item));
@@ -463,38 +555,50 @@ document.addEventListener("DOMContentLoaded", () => {
     tab.addEventListener("click", () => setWithdrawFilter(tab.dataset.filter));
   });
 
-  document.getElementById("withdrawContent").addEventListener("click", (event) => {
-    const weighBtn = event.target.closest(".weigh-btn");
-    if (weighBtn) {
-      event.stopPropagation();
+  document
+    .getElementById("withdrawContent")
+    .addEventListener("click", (event) => {
+      const weighBtn = event.target.closest(".weigh-btn");
+      if (weighBtn) {
+        event.stopPropagation();
+        if (typeof openWeighPanel === "function") {
+          openWeighPanel({
+            type: weighBtn.dataset.type,
+            name: weighBtn.dataset.itemName,
+            amount: Number(weighBtn.dataset.roundNeeded),
+            unit: weighBtn.dataset.itemUnit,
+            round: Number(weighBtn.dataset.round),
+            ...getWithdrawProductContext(),
+          });
+        }
+        return;
+      }
+
+      const printBtn = event.target.closest(".print-btn");
+      if (printBtn) {
+        event.stopPropagation();
+        const context = collectWithdrawPrintContext(printBtn);
+        if (context && typeof showPrintPreviewFromWithdraw === "function") {
+          showPrintPreviewFromWithdraw(context);
+        }
+        return;
+      }
+
+      const card = event.target.closest(".material-card--clickable");
+      if (!card) return;
+
       if (typeof openWeighPanel === "function") {
+        const total = Number(card.dataset.itemTotal);
+        const withdrawn = Number(card.dataset.itemWithdrawn);
         openWeighPanel({
-          type: weighBtn.dataset.type,
-          name: weighBtn.dataset.itemName,
-          amount: Number(weighBtn.dataset.roundNeeded),
-          unit: weighBtn.dataset.itemUnit,
-          round: Number(weighBtn.dataset.round),
+          type: card.dataset.type,
+          name: card.dataset.itemName,
+          amount: total - withdrawn,
+          unit: card.dataset.itemUnit,
           ...getWithdrawProductContext(),
         });
       }
-      return;
-    }
-
-    const card = event.target.closest(".material-card--clickable");
-    if (!card || event.target.closest(".print-btn")) return;
-
-    if (typeof openWeighPanel === "function") {
-      const total = Number(card.dataset.itemTotal);
-      const withdrawn = Number(card.dataset.itemWithdrawn);
-      openWeighPanel({
-        type: card.dataset.type,
-        name: card.dataset.itemName,
-        amount: total - withdrawn,
-        unit: card.dataset.itemUnit,
-        ...getWithdrawProductContext(),
-      });
-    }
-  });
+    });
 
   document.querySelectorAll(".filter-tabs .tab-btn").forEach((button) => {
     button.addEventListener("click", () => {
@@ -504,6 +608,10 @@ document.addEventListener("DOMContentLoaded", () => {
       button.classList.add("active");
     });
   });
+
+  document
+    .getElementById("productionSearch")
+    ?.addEventListener("input", filterProductionList);
 
   initWelcomeText();
 });
