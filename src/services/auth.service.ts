@@ -16,8 +16,8 @@ export default class AuthService {
     }
 
     return {
-      id: user.id,
-      name: user.name,
+      loginCode: user.loginCode,
+      firstName: user.firstName,
       username: user.username,
     };
   }

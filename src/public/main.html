@@ -181,11 +181,118 @@
 
           <div class="withdraw-content" id="withdrawContent"></div>
         </div>
+
+        <div id="weighPanel" class="weigh-panel">
+          <header class="weigh-header">
+            <button
+              class="weigh-close-btn"
+              id="closeWeighPanel"
+              type="button"
+              aria-label="ปิด"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            <p class="weigh-label" id="weighLabel">ชั่งน้ำหนักเคมี</p>
+            <h2 id="weighItemName">C AMCL</h2>
+            <p id="weighAmount">ยอดเบิก: 20.00 kg</p>
+          </header>
+
+          <div class="weigh-steps" id="weighSteps"></div>
+
+          <input
+            type="text"
+            id="scanInput"
+            class="scan-input"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            aria-hidden="true"
+            tabindex="-1"
+          />
+        </div>
+
+        <div id="summaryPanel" class="summary-panel">
+          <header class="summary-header">
+            <p class="summary-label">SUMMARY</p>
+            <h2 id="summaryItemName">C AMCL</h2>
+            <p id="summaryMeta">PB-BL03.3 · C01160626B</p>
+          </header>
+
+          <div class="summary-content">
+            <section class="summary-card">
+              <div class="summary-card-head">น้ำหนัก</div>
+              <div class="summary-card-body">
+                <div class="summary-row">
+                  <span>เป้าหมาย</span>
+                  <strong id="summaryTarget">20.00 kg</strong>
+                </div>
+                <div class="summary-row">
+                  <span>น้ำหนักสุทธิ (Net)</span>
+                  <strong id="summaryNet">19.96 kg</strong>
+                </div>
+                <div class="summary-row summary-row--highlight">
+                  <span>น้ำหนักรวม (Gross)</span>
+                  <strong id="summaryGross">145.26 kg</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="summary-card">
+              <div class="summary-card-head">รายละเอียด</div>
+              <div class="summary-card-body">
+                <div class="summary-row">
+                  <span>ชื่อผลิตภัณฑ์</span>
+                  <strong id="summaryProductName">POSE LIQUID SOAP</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Batch No.</span>
+                  <strong id="summaryBatchNo">C01160626B</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Lot วัตถุดิบ</span>
+                  <strong id="summaryMaterialLot">L26070608</strong>
+                </div>
+                <div class="summary-row">
+                  <span>รหัสควบคุม</span>
+                  <strong id="summaryControlCode">L26070608</strong>
+                </div>
+                <div class="summary-row">
+                  <span>ผู้ชั่ง</span>
+                  <strong id="summaryWeigher">Admin</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="summary-card">
+              <div class="summary-card-head">ผู้ตรวจสอบ</div>
+              <div class="summary-card-body">
+                <select id="summaryInspector" class="summary-select">
+                  <option value="">เลือกผู้ตรวจสอบ...</option>
+                  <option value="qc1">QC สมหญิง</option>
+                  <option value="qc2">QC วิชัย</option>
+                  <option value="qc3">QC ประภา</option>
+                </select>
+              </div>
+            </section>
+          </div>
+
+          <div class="summary-actions">
+            <button type="button" class="summary-print-btn" id="summaryPrintBtn">
+              <i class="fa-solid fa-print"></i>
+              ปริ้นใบบันทึก
+            </button>
+            <button type="button" class="summary-save-btn" id="summarySaveBtn">
+              บันทึก &amp; กลับหน้ารายการ
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
     <script src="./js/splash.js"></script>
     <script src="./js/auth.js"></script>
     <script src="./js/main.js"></script>
+    <script src="./js/weighing.js"></script>
   </body>
 </html>

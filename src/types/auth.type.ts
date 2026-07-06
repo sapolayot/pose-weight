@@ -7,8 +7,8 @@ export interface LoginRequest {
  * ข้อมูล user ที่เก็บใน session
  */
 export interface SessionUser {
-  id: number;
-  name: string;
+  loginCode: number;
+  firstName: string;
   username: string;
 }
 

@@ -1,5 +1,40 @@
 const API_URL = "/api";
 
+const DAYS_GREETING = [
+  "สวัสดีวันอาทิตย์",
+  "สวัสดีวันจันทร์",
+  "สวัสดีวันอังคาร",
+  "สวัสดีวันพุธ",
+  "สวัสดีวันพฤหัสบดี",
+  "สวัสดีวันศุกร์",
+  "สวัสดีวันเสาร์",
+];
+
+function setWelcomeText(user) {
+  const welcomeEl = document.getElementById("welcome-text");
+  if (!welcomeEl) return;
+
+  const greeting = DAYS_GREETING[new Date().getDay()];
+  const firstName = user?.firstName?.trim();
+
+  welcomeEl.textContent = firstName ? `${greeting}, ${firstName}` : greeting;
+}
+
+function initWelcomeText() {
+  if (window.__sessionUser) {
+    setWelcomeText(window.__sessionUser);
+    return;
+  }
+
+  document.addEventListener(
+    "auth:ready",
+    (event) => {
+      setWelcomeText(event.detail);
+    },
+    { once: true },
+  );
+}
+
 const productionMaterials = {
   C01: {
     chemical: [
@@ -59,11 +94,11 @@ const productionMaterials = {
     ],
     packaging: [
       {
-        name: "ขวด PET 500ml",
+        name: "1.5P Pump สีชมพู",
         code: "P001",
         withdrawn: 0,
-        total: 800,
-        unit: "ใบ",
+        total: 200,
+        unit: "ชิ้น",
         status: "pending",
       },
       {
@@ -264,7 +299,15 @@ function renderPartialCard(item, type) {
             <span class="round-label">รอบที่ ${round.round}</span>
             <span class="round-detail">ต้องการ ${formatAmount(round.needed)} ${round.unit}</span>
           </div>
-          <button class="weigh-btn" type="button">ชั่งรอบ ${round.round}</button>
+          <button
+            class="weigh-btn"
+            type="button"
+            data-type="${type}"
+            data-item-name="${item.name}"
+            data-round="${round.round}"
+            data-round-needed="${round.needed}"
+            data-item-unit="${round.unit}"
+          >ชั่งรอบ ${round.round}</button>
         </div>
       `;
     })
@@ -290,8 +333,17 @@ function renderPartialCard(item, type) {
 }
 
 function renderPendingCard(item, type) {
+  const remain = item.total - (item.withdrawn || 0);
+
   return `
-    <div class="material-card" data-type="${type}">
+    <div
+      class="material-card material-card--clickable"
+      data-type="${type}"
+      data-item-name="${item.name}"
+      data-item-total="${item.total}"
+      data-item-withdrawn="${item.withdrawn || 0}"
+      data-item-unit="${item.unit}"
+    >
       <div class="material-card-main">
         <div class="material-icon material-icon--type">${type}</div>
         <div class="material-info">
@@ -355,6 +407,8 @@ function openWithdrawPanel(item) {
     `จำนวน: ${amount} ${unit} · Lot: ${lot}`;
 
   panel.dataset.productId = productId;
+  panel.dataset.batchLot = lot;
+  panel.dataset.docNo = item.getAttribute("data-doc") || "";
 
   panel.querySelectorAll(".withdraw-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.filter === "all");
@@ -366,6 +420,16 @@ function openWithdrawPanel(item) {
   );
 
   panel.classList.add("active");
+}
+
+function getWithdrawProductContext() {
+  const panel = document.getElementById("withdrawPanel");
+
+  return {
+    productName: document.getElementById("withdrawTitle").textContent,
+    batchNo: panel.dataset.batchLot || "",
+    docNo: panel.dataset.docNo || "PB-BL03.3",
+  };
 }
 
 function closeWithdrawPanel() {
@@ -391,10 +455,45 @@ document.addEventListener("DOMContentLoaded", () => {
     item.addEventListener("click", () => openWithdrawPanel(item));
   });
 
-  document.getElementById("backToList").addEventListener("click", closeWithdrawPanel);
+  document
+    .getElementById("backToList")
+    .addEventListener("click", closeWithdrawPanel);
 
   document.querySelectorAll(".withdraw-tab").forEach((tab) => {
     tab.addEventListener("click", () => setWithdrawFilter(tab.dataset.filter));
+  });
+
+  document.getElementById("withdrawContent").addEventListener("click", (event) => {
+    const weighBtn = event.target.closest(".weigh-btn");
+    if (weighBtn) {
+      event.stopPropagation();
+      if (typeof openWeighPanel === "function") {
+        openWeighPanel({
+          type: weighBtn.dataset.type,
+          name: weighBtn.dataset.itemName,
+          amount: Number(weighBtn.dataset.roundNeeded),
+          unit: weighBtn.dataset.itemUnit,
+          round: Number(weighBtn.dataset.round),
+          ...getWithdrawProductContext(),
+        });
+      }
+      return;
+    }
+
+    const card = event.target.closest(".material-card--clickable");
+    if (!card || event.target.closest(".print-btn")) return;
+
+    if (typeof openWeighPanel === "function") {
+      const total = Number(card.dataset.itemTotal);
+      const withdrawn = Number(card.dataset.itemWithdrawn);
+      openWeighPanel({
+        type: card.dataset.type,
+        name: card.dataset.itemName,
+        amount: total - withdrawn,
+        unit: card.dataset.itemUnit,
+        ...getWithdrawProductContext(),
+      });
+    }
   });
 
   document.querySelectorAll(".filter-tabs .tab-btn").forEach((button) => {
@@ -406,16 +505,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  const daysGreeting = [
-    "สวัสดีวันอาทิตย์",
-    "สวัสดีวันจันทร์",
-    "สวัสดีวันอังคาร",
-    "สวัสดีวันพุธ",
-    "สวัสดีวันพฤหัสบดี",
-    "สวัสดีวันศุกร์",
-    "สวัสดีวันเสาร์",
-  ];
-
-  document.getElementById("welcome-text").innerText =
-    daysGreeting[new Date().getDay()];
+  initWelcomeText();
 });

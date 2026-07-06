@@ -1,9 +1,9 @@
 import "express-session";
-import Login from "../models/login.model";
+import { SessionUser } from "../types/auth.type";
 
 declare module "express-session" {
   interface SessionData {
-    user?: Login;
+    user?: SessionUser;
   }
 }
 
