@@ -232,8 +232,8 @@
 
           <div class="print-preview-content">
             <article class="weighing-tag" id="weighingTag">
-              <div class="weighing-tag-top">
-                <div>
+              <div class="weighing-tag-section weighing-tag-section--head">
+                <div class="weighing-tag-head-left">
                   <p class="weighing-tag-title">
                     บันทึกประจำภาชนะ วัตถุดิบทุกชนิด
                   </p>
@@ -242,42 +242,15 @@
                 <span class="weighing-tag-brand">POSE</span>
               </div>
 
-              <div class="weighing-tag-meta">
-                <div class="weighing-tag-meta-row">
-                  <span>วันที่สั่งผลิต</span>
-                  <strong id="tagProductionDate">09-06-2026</strong>
-                </div>
-                <div class="weighing-tag-meta-row">
-                  <span>Batch No.</span>
-                  <strong id="tagBatchNo">C01160626B</strong>
-                </div>
-              </div>
-
-              <div class="weighing-tag-qr-row">
-                <div class="weighing-tag-fields">
-                  <div class="weighing-tag-field">
-                    <span>ชื่อผลิตภัณฑ์</span>
-                    <strong id="tagProductName">POSE LIQUID SOAP</strong>
+              <div class="weighing-tag-section weighing-tag-section--date-qr">
+                <div class="weighing-tag-date-col">
+                  <div class="weighing-tag-stack">
+                    <span>วันที่สั่งผลิต</span>
+                    <strong id="tagProductionDate">09-06-2026</strong>
                   </div>
-                  <div class="weighing-tag-field">
-                    <span>Batch Size</span>
-                    <strong id="tagBatchSize">800.00 Kg.</strong>
-                  </div>
-                  <div class="weighing-tag-field">
-                    <span>รหัสวัตถุดิบ</span>
-                    <strong id="tagMaterialCode">C AMCL</strong>
-                  </div>
-                  <div class="weighing-tag-field">
-                    <span>Lot วัตถุดิบ</span>
-                    <strong id="tagMaterialLot">L26070609</strong>
-                  </div>
-                  <div class="weighing-tag-field">
-                    <span>รหัสควบคุม</span>
-                    <strong id="tagControlCode">L26070609</strong>
-                  </div>
-                  <div class="weighing-tag-field">
-                    <span>ลักษณะ</span>
-                    <strong id="tagAppearance">ผงสีขาว ละเอียด</strong>
+                  <div class="weighing-tag-stack">
+                    <span>Batch No.</span>
+                    <strong id="tagBatchNo">C01160626B</strong>
                   </div>
                 </div>
                 <div class="weighing-tag-qr">
@@ -288,26 +261,57 @@
                 </div>
               </div>
 
-              <div class="weighing-tag-weight-row">
-                <span>น้ำหนักสุทธิ</span>
-                <strong id="tagNetWeight">19.9600 kg.</strong>
-              </div>
-              <div
-                class="weighing-tag-weight-row weighing-tag-weight-row--gross"
-              >
-                <span>รวมน้ำหนัก</span>
-                <strong id="tagGrossWeight">145.2600 kg.</strong>
+              <div class="weighing-tag-section weighing-tag-section--product">
+                <div class="weighing-tag-stack">
+                  <span>ชื่อผลิตภัณฑ์</span>
+                  <strong id="tagProductName">POSE LIQUID SOAP</strong>
+                </div>
+                <div class="weighing-tag-stack">
+                  <span>Batch Size</span>
+                  <strong id="tagBatchSize">800.00 Kg.</strong>
+                </div>
+                <div class="weighing-tag-grid-2">
+                  <div class="weighing-tag-stack">
+                    <span>รหัสวัตถุดิบ</span>
+                    <strong id="tagMaterialCode">C AMCL</strong>
+                  </div>
+                  <div class="weighing-tag-stack">
+                    <span>Lot วัตถุดิบ</span>
+                    <strong id="tagMaterialLot">L26070609</strong>
+                  </div>
+                </div>
+                <div class="weighing-tag-stack">
+                  <span>รหัสควบคุม</span>
+                  <strong id="tagControlCode">L26070609</strong>
+                </div>
+                <div class="weighing-tag-stack">
+                  <span>ลักษณะ</span>
+                  <strong id="tagAppearance">ผงสีขาว ละเอียด</strong>
+                </div>
               </div>
 
-              <div class="weighing-tag-footer">
-                <div class="weighing-tag-person">
-                  <span>ผู้รับผิดชอบ</span>
+              <div class="weighing-tag-section weighing-tag-section--weights">
+                <div class="weighing-tag-weight-row">
+                  <span>น้ำหนักสุทธิ (Net)</span>
+                  <strong id="tagNetWeight">19.9600 kg.</strong>
+                </div>
+                <div
+                  class="weighing-tag-weight-row weighing-tag-weight-row--gross"
+                >
+                  <span>รวมน้ำหนัก (Gross)</span>
+                  <strong id="tagGrossWeight">145.2600 kg.</strong>
+                </div>
+              </div>
+
+              <div class="weighing-tag-section weighing-tag-section--footer">
+                <p class="weighing-tag-signature">
+                  <span>ผู้รับผิดชอบ :</span>
                   <strong id="tagWeigher">Admin</strong>
-                </div>
-                <div class="weighing-tag-person">
-                  <span>ผู้ตรวจสอบ</span>
+                </p>
+                <p class="weighing-tag-signature">
+                  <span>ผู้ตรวจสอบ :</span>
                   <strong id="tagInspector">—</strong>
-                </div>
+                </p>
               </div>
             </article>
           </div>
