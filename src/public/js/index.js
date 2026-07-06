@@ -1,6 +1,25 @@
 const API_URL = "/api";
 
+function showLoginError(message) {
+  const errorBox = document.getElementById("login-error");
+  const errorText = document.getElementById("login-error-text");
+
+  if (!errorBox || !errorText) return;
+
+  errorText.textContent = message;
+  errorBox.hidden = false;
+}
+
+function hideLoginError() {
+  const errorBox = document.getElementById("login-error");
+  if (!errorBox) return;
+
+  errorBox.hidden = true;
+}
+
 async function login() {
+  hideLoginError();
+
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
   const rememberMe = document.getElementById("rememberMe")?.checked;
@@ -15,10 +34,15 @@ async function login() {
       body: JSON.stringify({ username, password, rememberMe }),
     });
 
-    const data = await res.json();
+    let data = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = {};
+    }
 
     if (!res.ok) {
-      alert(data.message || "Login failed");
+      showLoginError(data.message || "เข้าสู่ระบบไม่สำเร็จ");
       return;
     }
 
@@ -31,6 +55,7 @@ async function login() {
     window.location.href = "/main.html";
   } catch (err) {
     console.error(err);
+    showLoginError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
   }
 }
 

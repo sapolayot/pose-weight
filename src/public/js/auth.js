@@ -1,21 +1,28 @@
 const AUTH_API_URL = "/api";
 
-/** หน้าที่เข้าได้เฉพาะผู้ที่ยังไม่ login */
+/** หน้า login — redirect ไป main ถ้า login แล้ว */
 const GUEST_ONLY_PAGES = new Set(["/", "/index.html"]);
+
+/** หน้าที่เข้าได้ทุกคน ไม่ตรวจ session */
+const PUBLIC_PAGES = new Set(["/404.html"]);
 
 /** หน้าที่ต้อง login — เพิ่ม path ของหน้าใหม่ที่นี่ */
 const PROTECTED_PAGES = new Set(["/main.html"]);
 
 function isProtectedPage(path) {
-  if (PROTECTED_PAGES.has(path)) return true;
-  return path.endsWith(".html") && !GUEST_ONLY_PAGES.has(path);
+  return PROTECTED_PAGES.has(path);
 }
 
 function getPageAuthType() {
   const fromBody = document.body?.dataset?.pageAuth;
-  if (fromBody) return fromBody;
+  if (fromBody === "public") return null;
+
+  if (fromBody === "guest") return "guest";
+  if (fromBody === "protected") return "protected";
 
   const currentPath = window.location.pathname;
+
+  if (PUBLIC_PAGES.has(currentPath)) return null;
 
   if (GUEST_ONLY_PAGES.has(currentPath)) return "guest";
   if (isProtectedPage(currentPath)) return "protected";

@@ -4,8 +4,8 @@ import express, { Application, NextFunction, Request, Response } from "express";
 import session from "express-session";
 import path from "path";
 // import loginRoutes from "./routes/login.routes";
-import authRoutes from "./routes/auth.routes";
 import { pageAuthMiddleware } from "./middlewares/page-auth.middleware";
+import authRoutes from "./routes/auth.routes";
 
 import { testConnection } from "./config/database.config";
 
@@ -74,6 +74,10 @@ app.use("/api", authRoutes);
  */
 app.use(pageAuthMiddleware);
 
+app.get("/404.html", (req: Request, res: Response) => {
+  res.status(404).sendFile(path.join(__dirname, "./public", "404.html"));
+});
+
 /**
  * Static Files
  * http://localhost:3000/
@@ -81,13 +85,17 @@ app.use(pageAuthMiddleware);
 app.use(express.static(path.join(__dirname, "./public")));
 
 /**
- * 404
+ * 404 — redirect ไป /404.html เพื่อให้ asset path และ auth ทำงานถูกต้อง
  */
 app.use((req: Request, res: Response) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found",
-  });
+  if (req.path.startsWith("/api")) {
+    return res.status(404).json({
+      success: false,
+      message: "Route not found",
+    });
+  }
+
+  res.status(404).redirect("/404.html");
 });
 
 /**
