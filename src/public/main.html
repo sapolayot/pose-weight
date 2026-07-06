@@ -180,12 +180,24 @@
             <section class="summary-card">
               <div class="summary-card-head">ผู้ตรวจสอบ</div>
               <div class="summary-card-body">
-                <select id="summaryInspector" class="summary-select">
+                <select
+                  id="summaryInspector"
+                  class="summary-select"
+                  required
+                  aria-describedby="summaryInspectorError"
+                >
                   <option value="">เลือกผู้ตรวจสอบ...</option>
                   <option value="qc1">QC สมหญิง</option>
                   <option value="qc2">QC วิชัย</option>
                   <option value="qc3">QC ประภา</option>
                 </select>
+                <p
+                  class="summary-field-error"
+                  id="summaryInspectorError"
+                  hidden
+                >
+                  กรุณาเลือกผู้ตรวจสอบ
+                </p>
               </div>
             </section>
           </div>

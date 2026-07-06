@@ -166,6 +166,31 @@ function getInspectorName() {
   return select.options[select.selectedIndex].text;
 }
 
+function clearSummaryInspectorError() {
+  const select = document.getElementById("summaryInspector");
+  const errorEl = document.getElementById("summaryInspectorError");
+
+  select?.classList.remove("summary-select--error");
+  if (errorEl) errorEl.hidden = true;
+}
+
+function validateSummaryInspector() {
+  const select = document.getElementById("summaryInspector");
+  const errorEl = document.getElementById("summaryInspectorError");
+
+  if (!select) return false;
+
+  if (select.value) {
+    clearSummaryInspectorError();
+    return true;
+  }
+
+  select.classList.add("summary-select--error");
+  if (errorEl) errorEl.hidden = false;
+  select.focus();
+  return false;
+}
+
 let printPreviewReturnTo = null;
 
 function formatTagProductName(name) {
@@ -468,6 +493,7 @@ function showSummaryPanel() {
 
   const inspector = document.getElementById("summaryInspector");
   if (inspector) inspector.value = "";
+  clearSummaryInspectorError();
 
   document.getElementById("summaryPanel").classList.add("active");
 }
@@ -1173,11 +1199,19 @@ function initWeighingPanel() {
   });
 
   document.getElementById("summarySaveBtn")?.addEventListener("click", () => {
+    if (!validateSummaryInspector()) return;
     closeSummaryPanel();
   });
 
   document.getElementById("summaryPrintBtn")?.addEventListener("click", () => {
+    if (!validateSummaryInspector()) return;
     showPrintPreviewPanel();
+  });
+
+  document.getElementById("summaryInspector")?.addEventListener("change", () => {
+    if (document.getElementById("summaryInspector")?.value) {
+      clearSummaryInspectorError();
+    }
   });
 
   document
