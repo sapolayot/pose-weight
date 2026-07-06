@@ -8,16 +8,16 @@ export default class AuthService {
     const user = await this.repo.findByUsername(request.username);
 
     if (!user) {
-      throw new Error("Invalid username or password");
+      throw new Error("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     }
 
     if (user.password !== request.password) {
-      throw new Error("Invalid username or password");
+      throw new Error("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     }
 
     return {
-      id: user.id,
-      name: user.name,
+      loginCode: user.loginCode,
+      firstName: user.firstName,
       username: user.username,
     };
   }

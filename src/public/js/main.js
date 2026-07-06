@@ -1,4 +1,39 @@
-const API_URL = "http://localhost:3000/api";
+const API_URL = "/api";
+
+const DAYS_GREETING = [
+  "สวัสดีวันอาทิตย์",
+  "สวัสดีวันจันทร์",
+  "สวัสดีวันอังคาร",
+  "สวัสดีวันพุธ",
+  "สวัสดีวันพฤหัสบดี",
+  "สวัสดีวันศุกร์",
+  "สวัสดีวันเสาร์",
+];
+
+function setWelcomeText(user) {
+  const welcomeEl = document.getElementById("welcome-text");
+  if (!welcomeEl) return;
+
+  const greeting = DAYS_GREETING[new Date().getDay()];
+  const firstName = user?.firstName?.trim();
+
+  welcomeEl.textContent = firstName ? `${greeting}, ${firstName}` : greeting;
+}
+
+function initWelcomeText() {
+  if (window.__sessionUser) {
+    setWelcomeText(window.__sessionUser);
+    return;
+  }
+
+  document.addEventListener(
+    "auth:ready",
+    (event) => {
+      setWelcomeText(event.detail);
+    },
+    { once: true },
+  );
+}
 
 const productionMaterials = {
   C01: {
@@ -59,11 +94,11 @@ const productionMaterials = {
     ],
     packaging: [
       {
-        name: "ขวด PET 500ml",
+        name: "1.5P Pump สีชมพู",
         code: "P001",
         withdrawn: 0,
-        total: 800,
-        unit: "ใบ",
+        total: 200,
+        unit: "ชิ้น",
         status: "pending",
       },
       {
@@ -217,7 +252,15 @@ function renderCompletedCard(item, type) {
   }
 
   return `
-    <div class="material-card material-card--completed" data-type="${type}">
+    <div
+      class="material-card material-card--completed"
+      data-type="${type}"
+      data-item-name="${item.name}"
+      data-item-code="${item.code || ""}"
+      data-item-lot="${item.lot || ""}"
+      data-item-amount="${item.withdrawn}"
+      data-item-unit="${item.unit}"
+    >
       <div class="material-card-main">
         <div class="material-icon material-icon--check">
           <i class="fa-solid fa-check"></i>
@@ -245,7 +288,16 @@ function renderPartialCard(item, type) {
         ].filter(Boolean);
 
         return `
-          <div class="round-item round-item--done">
+          <div
+            class="round-item round-item--done"
+            data-type="${type}"
+            data-item-name="${item.name}"
+            data-round="${round.round}"
+            data-item-lot="${round.lot || ""}"
+            data-item-code="${round.code || ""}"
+            data-item-amount="${round.amount}"
+            data-item-unit="${round.unit}"
+          >
             <span class="round-dot round-dot--green"></span>
             <div class="round-info">
               <span class="round-label">รอบที่ ${round.round}</span>
@@ -264,7 +316,15 @@ function renderPartialCard(item, type) {
             <span class="round-label">รอบที่ ${round.round}</span>
             <span class="round-detail">ต้องการ ${formatAmount(round.needed)} ${round.unit}</span>
           </div>
-          <button class="weigh-btn" type="button">ชั่งรอบ ${round.round}</button>
+          <button
+            class="weigh-btn"
+            type="button"
+            data-type="${type}"
+            data-item-name="${item.name}"
+            data-round="${round.round}"
+            data-round-needed="${round.needed}"
+            data-item-unit="${round.unit}"
+          >ชั่งรอบ ${round.round}</button>
         </div>
       `;
     })
@@ -290,8 +350,17 @@ function renderPartialCard(item, type) {
 }
 
 function renderPendingCard(item, type) {
+  const remain = item.total - (item.withdrawn || 0);
+
   return `
-    <div class="material-card" data-type="${type}">
+    <div
+      class="material-card material-card--clickable"
+      data-type="${type}"
+      data-item-name="${item.name}"
+      data-item-total="${item.total}"
+      data-item-withdrawn="${item.withdrawn || 0}"
+      data-item-unit="${item.unit}"
+    >
       <div class="material-card-main">
         <div class="material-icon material-icon--type">${type}</div>
         <div class="material-info">
@@ -344,7 +413,8 @@ function renderWithdrawContent(productId, filter = "all") {
 
 function openWithdrawPanel(item) {
   const panel = document.getElementById("withdrawPanel");
-  const productId = item.getAttribute("data-id");
+  const productId =
+    item.getAttribute("data-product-code") || item.getAttribute("data-id");
   const name = item.getAttribute("data-name");
   const lot = item.getAttribute("data-lot");
   const amount = item.getAttribute("data-amount");
@@ -355,6 +425,11 @@ function openWithdrawPanel(item) {
     `จำนวน: ${amount} ${unit} · Lot: ${lot}`;
 
   panel.dataset.productId = productId;
+  panel.dataset.batchLot = lot;
+  panel.dataset.docNo = item.getAttribute("data-doc") || "";
+  panel.dataset.batchSize = amount || "";
+  panel.dataset.batchUnit = unit || "";
+  panel.dataset.productionDate = item.getAttribute("data-date") || "";
 
   panel.querySelectorAll(".withdraw-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.filter === "all");
@@ -366,6 +441,53 @@ function openWithdrawPanel(item) {
   );
 
   panel.classList.add("active");
+}
+
+function getWithdrawProductContext() {
+  const panel = document.getElementById("withdrawPanel");
+
+  return {
+    productName: document.getElementById("withdrawTitle").textContent,
+    batchNo: panel.dataset.batchLot || "",
+    docNo: panel.dataset.docNo || "PB-BL03.3",
+    batchSize: panel.dataset.batchSize || "",
+    batchUnit: panel.dataset.batchUnit || "",
+    productionDate: panel.dataset.productionDate || "",
+  };
+}
+
+function collectWithdrawPrintContext(printBtn) {
+  const roundItem = printBtn.closest(".round-item--done");
+  const completedCard = printBtn.closest(".material-card--completed");
+  const product = getWithdrawProductContext();
+
+  if (roundItem) {
+    return {
+      type: roundItem.dataset.type,
+      itemName: roundItem.dataset.itemName,
+      amount: Number(roundItem.dataset.itemAmount),
+      unit: roundItem.dataset.itemUnit,
+      round: Number(roundItem.dataset.round),
+      lot: roundItem.dataset.itemLot,
+      code: roundItem.dataset.itemCode,
+      ...product,
+    };
+  }
+
+  if (completedCard) {
+    return {
+      type: completedCard.dataset.type,
+      itemName: completedCard.dataset.itemName,
+      amount: Number(completedCard.dataset.itemAmount),
+      unit: completedCard.dataset.itemUnit,
+      round: null,
+      lot: completedCard.dataset.itemLot,
+      code: completedCard.dataset.itemCode,
+      ...product,
+    };
+  }
+
+  return null;
 }
 
 function closeWithdrawPanel() {
@@ -386,16 +508,170 @@ function setWithdrawFilter(filter) {
   );
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".list-item").forEach((item) => {
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function renderProductionListItem(item) {
+  return `
+    <div
+      class="list-item"
+      data-id="${escapeHtml(item.id)}"
+      data-product-code="${escapeHtml(item.productCode)}"
+      data-name="${escapeHtml(item.name)}"
+      data-lot="${escapeHtml(item.lot)}"
+      data-doc="${escapeHtml(item.doc)}"
+      data-date="${escapeHtml(item.date)}"
+      data-amount="${escapeHtml(item.amount)}"
+      data-unit="${escapeHtml(item.unit)}"
+      data-display-status="${escapeHtml(item.displayStatus)}"
+    >
+      <div class="item-icon">
+        <i class="fa-regular fa-file-lines"></i>
+      </div>
+      <div class="item-details">
+        <h3>${escapeHtml(item.name)}</h3>
+        <p>Lot No. ${escapeHtml(item.lot)}</p>
+        <p class="doc-no">Doc. ${escapeHtml(item.doc)}</p>
+      </div>
+      <div class="item-stats">
+        <span class="date">${escapeHtml(item.date)}</span>
+        <span class="amount">${escapeHtml(item.amount)}</span>
+        <span class="unit">${escapeHtml(item.unit)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function bindProductionListItems() {
+  document.querySelectorAll(".production-list .list-item").forEach((item) => {
     item.addEventListener("click", () => openWithdrawPanel(item));
   });
+}
 
-  document.getElementById("backToList").addEventListener("click", closeWithdrawPanel);
+let productionSearchTimer = null;
+
+async function loadProductionList(query = "") {
+  const listEl = document.getElementById("productionList");
+  const emptyEl = document.getElementById("productionEmpty");
+  const loadingEl = document.getElementById("productionLoading");
+
+  if (!listEl) return;
+
+  if (loadingEl) loadingEl.hidden = false;
+  if (emptyEl) {
+    emptyEl.textContent = "ไม่พบรายการที่ค้นหา";
+    emptyEl.hidden = true;
+  }
+
+  try {
+    const params = new URLSearchParams();
+    if (query.trim()) {
+      params.set("q", query.trim());
+    }
+
+    const response = await fetch(
+      `${API_URL}/wh-stock-transmit-iso?${params.toString()}`,
+      { credentials: "include" },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to load production list");
+    }
+
+    const payload = await response.json();
+    const items = Array.isArray(payload.data) ? payload.data : [];
+
+    listEl.querySelectorAll(".list-item").forEach((item) => item.remove());
+
+    if (items.length === 0) {
+      if (emptyEl) emptyEl.hidden = false;
+    } else {
+      listEl.insertAdjacentHTML(
+        "beforeend",
+        items.map((item) => renderProductionListItem(item)).join(""),
+      );
+      bindProductionListItems();
+    }
+  } catch (error) {
+    console.error(error);
+    if (emptyEl) {
+      emptyEl.textContent = "ไม่สามารถโหลดรายการผลิตได้";
+      emptyEl.hidden = false;
+    }
+  } finally {
+    if (loadingEl) loadingEl.hidden = true;
+  }
+}
+
+function handleProductionSearchInput() {
+  clearTimeout(productionSearchTimer);
+  productionSearchTimer = setTimeout(() => {
+    const query =
+      document.getElementById("productionSearch")?.value.trim() || "";
+    loadProductionList(query);
+  }, 300);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadProductionList();
+
+  document
+    .getElementById("backToList")
+    .addEventListener("click", closeWithdrawPanel);
 
   document.querySelectorAll(".withdraw-tab").forEach((tab) => {
     tab.addEventListener("click", () => setWithdrawFilter(tab.dataset.filter));
   });
+
+  document
+    .getElementById("withdrawContent")
+    .addEventListener("click", (event) => {
+      const weighBtn = event.target.closest(".weigh-btn");
+      if (weighBtn) {
+        event.stopPropagation();
+        if (typeof openWeighPanel === "function") {
+          openWeighPanel({
+            type: weighBtn.dataset.type,
+            name: weighBtn.dataset.itemName,
+            amount: Number(weighBtn.dataset.roundNeeded),
+            unit: weighBtn.dataset.itemUnit,
+            round: Number(weighBtn.dataset.round),
+            ...getWithdrawProductContext(),
+          });
+        }
+        return;
+      }
+
+      const printBtn = event.target.closest(".print-btn");
+      if (printBtn) {
+        event.stopPropagation();
+        const context = collectWithdrawPrintContext(printBtn);
+        if (context && typeof showPrintPreviewFromWithdraw === "function") {
+          showPrintPreviewFromWithdraw(context);
+        }
+        return;
+      }
+
+      const card = event.target.closest(".material-card--clickable");
+      if (!card) return;
+
+      if (typeof openWeighPanel === "function") {
+        const total = Number(card.dataset.itemTotal);
+        const withdrawn = Number(card.dataset.itemWithdrawn);
+        openWeighPanel({
+          type: card.dataset.type,
+          name: card.dataset.itemName,
+          amount: total - withdrawn,
+          unit: card.dataset.itemUnit,
+          ...getWithdrawProductContext(),
+        });
+      }
+    });
 
   document.querySelectorAll(".filter-tabs .tab-btn").forEach((button) => {
     button.addEventListener("click", () => {
@@ -406,16 +682,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  const daysGreeting = [
-    "สวัสดีวันอาทิตย์",
-    "สวัสดีวันจันทร์",
-    "สวัสดีวันอังคาร",
-    "สวัสดีวันพุธ",
-    "สวัสดีวันพฤหัสบดี",
-    "สวัสดีวันศุกร์",
-    "สวัสดีวันเสาร์",
-  ];
+  document
+    .getElementById("productionSearch")
+    ?.addEventListener("input", handleProductionSearchInput);
 
-  document.getElementById("welcome-text").innerText =
-    daysGreeting[new Date().getDay()];
+  initWelcomeText();
 });

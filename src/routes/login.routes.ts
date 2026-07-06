@@ -6,13 +6,12 @@ import {
   remove,
   update,
 } from "../controllers/login.controller";
-import { isLoggedIn } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.get("/", isLoggedIn, getAll);
-router.post("/", isLoggedIn, create);
-router.put("/:id", isLoggedIn, update);
-router.delete("/:id", isLoggedIn, remove);
+router.get("/", getAll);
+router.post("/", create);
+router.put("/:id", update);
+router.delete("/:id", remove);
 
 export default router;

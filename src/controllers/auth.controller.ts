@@ -17,15 +17,19 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     req.session.user = user;
 
     if (req.body.rememberMe) {
-      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30; // 30 วัน
+      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30;
     } else {
-      req.session.cookie.expires = undefined;
+      req.session.cookie.maxAge = undefined;
     }
 
-    res.json({
-      success: true,
-      message: "Login success",
-      data: user,
+    req.session.save((err) => {
+      if (err) return next(err);
+
+      res.json({
+        success: true,
+        message: "Login success",
+        data: user,
+      });
     });
   } catch (err) {
     next(err);
@@ -34,14 +38,27 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
 export function me(req: Request, res: Response) {
   if (!req.session.user) {
-    return res.status(401).json({ message: "not logged in" });
+    return res.status(401).json({
+      success: false,
+      message: "not logged in",
+    });
   }
 
   res.json(req.session.user);
 }
 
 export function logout(req: Request, res: Response) {
-  req.session.destroy(() => {
+  const cookieName = "connect.sid";
+
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: "Logout failed",
+      });
+    }
+
+    res.clearCookie(cookieName);
     res.json({
       success: true,
       message: "Logged out",

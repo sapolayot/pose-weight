@@ -1,7 +1,9 @@
 export default class Login {
-  id?: number;
+  loginCode?: number;
 
-  name: string;
+  firstName: string;
+
+  lastName: string;
 
   username: string;
 
@@ -12,8 +14,9 @@ export default class Login {
   updatedAt?: Date;
 
   constructor(data: Partial<Login> = {}) {
-    this.id = data.id;
-    this.name = data.name ?? "";
+    this.loginCode = data.loginCode;
+    this.firstName = data.firstName ?? "";
+    this.lastName = data.lastName ?? "";
     this.password = data.password ?? "";
     this.username = data.username ?? "";
     this.createdAt = data.createdAt;

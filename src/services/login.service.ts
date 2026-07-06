@@ -50,7 +50,7 @@ export default class UserService {
 
     const emailOwner = await this.loginSqlRepository.findByEmail(request.email);
 
-    if (emailOwner && emailOwner.id !== id) {
+    if (emailOwner && emailOwner.loginCode !== id) {
       throw new Error("Email already exists");
     }
 

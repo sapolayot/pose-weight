@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="./css/splash.css" />
     <link rel="stylesheet" href="./css/main.css" />
   </head>
-  <body>
+  <body data-page-auth="protected">
     <div class="desktop-wrapper">
       <div class="mobile-container">
         <div id="listView" class="list-view">
@@ -39,7 +39,12 @@
           <main class="app-content">
             <div class="search-box">
               <i class="fa-solid fa-magnifying-glass search-icon"></i>
-              <input type="text" placeholder="ค้นหา รหัส / ชื่อ / Lot..." />
+              <input
+                type="search"
+                id="productionSearch"
+                placeholder="ค้นหา รหัส / ชื่อ / Lot..."
+                autocomplete="off"
+              />
             </div>
 
             <div class="filter-tabs">
@@ -48,107 +53,15 @@
               <button class="tab-btn" type="button">เสร็จแล้ว</button>
             </div>
 
-            <div class="production-list">
-              <div
-                class="list-item"
-                data-id="C01"
-                data-name="C01: POSE LIQUID SOAP"
-                data-lot="C01160626B"
-                data-doc="00012606-0076"
-                data-date="09-06-2026"
-                data-amount="800.00"
-                data-unit="Kg."
-              >
-                <div class="item-icon">
-                  <i class="fa-regular fa-file-lines"></i>
-                </div>
-                <div class="item-details">
-                  <h3>C01: POSE LIQUID SOAP</h3>
-                  <p>Lot No. C01160626B</p>
-                  <p class="doc-no">Doc. 00012606-0076</p>
-                </div>
-                <div class="item-stats">
-                  <span class="date">09-06-2026</span>
-                  <span class="amount">800.00</span>
-                  <span class="unit">Kg.</span>
-                </div>
-              </div>
-
-              <div
-                class="list-item"
-                data-id="D42"
-                data-name="D42: POSE-CLORITE 10%"
-                data-lot="D42150626A"
-                data-doc="00012606-0075"
-                data-date="09-06-2026"
-                data-amount="126.69"
-                data-unit="Kg."
-              >
-                <div class="item-icon">
-                  <i class="fa-regular fa-file-lines"></i>
-                </div>
-                <div class="item-details">
-                  <h3>D42: POSE-CLORITE 10%</h3>
-                  <p>Lot No. D42150626A</p>
-                  <p class="doc-no">Doc. 00012606-0075</p>
-                </div>
-                <div class="item-stats">
-                  <span class="date">09-06-2026</span>
-                  <span class="amount">126.69</span>
-                  <span class="unit">Kg.</span>
-                </div>
-              </div>
-
-              <div
-                class="list-item"
-                data-id="D27-1"
-                data-name="D27: Q-BAC 2A"
-                data-lot="D27190626A"
-                data-doc="00012606-0074"
-                data-date="13-06-2026"
-                data-amount="2,000.00"
-                data-unit="Lt."
-              >
-                <div class="item-icon">
-                  <i class="fa-regular fa-file-lines"></i>
-                </div>
-                <div class="item-details">
-                  <h3>D27: Q-BAC 2A</h3>
-                  <p>Lot No. D27190626A</p>
-                  <p class="doc-no">Doc. 00012606-0074</p>
-                </div>
-                <div class="item-stats">
-                  <span class="date">13-06-2026</span>
-                  <span class="amount">2,000.00</span>
-                  <span class="unit">Lt.</span>
-                </div>
-              </div>
-
-              <div
-                class="list-item"
-                data-id="D27-2"
-                data-name="D27: Q-BAC 2A"
-                data-lot="D27180626A"
-                data-doc="00012606-0073"
-                data-date="09-06-2026"
-                data-amount="2,000.00"
-                data-unit="Lt."
-              >
-                <div class="item-icon">
-                  <i class="fa-regular fa-file-lines"></i>
-                </div>
-                <div class="item-details">
-                  <h3>D27: Q-BAC 2A</h3>
-                  <p>Lot No. D27180626A</p>
-                  <p class="doc-no">Doc. 00012606-0073</p>
-                </div>
-                <div class="item-stats">
-                  <span class="date">09-06-2026</span>
-                  <span class="amount">2,000.00</span>
-                  <span class="unit">Lt.</span>
-                </div>
-              </div>
+            <div class="production-list" id="productionList">
+              <p class="production-loading" id="productionLoading">
+                กำลังโหลดรายการผลิต...
+              </p>
             </div>
+
+            <p class="production-empty" id="productionEmpty" hidden>
+              ไม่พบรายการที่ค้นหา
+            </p>
           </main>
         </div>
 
@@ -181,10 +94,245 @@
 
           <div class="withdraw-content" id="withdrawContent"></div>
         </div>
+
+        <div id="weighPanel" class="weigh-panel">
+          <header class="weigh-header">
+            <button
+              class="weigh-close-btn"
+              id="closeWeighPanel"
+              type="button"
+              aria-label="ปิด"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            <p class="weigh-label" id="weighLabel">ชั่งน้ำหนักเคมี</p>
+            <h2 id="weighItemName">C AMCL</h2>
+            <p id="weighAmount">ยอดเบิก: 20.00 kg</p>
+          </header>
+
+          <div class="weigh-steps" id="weighSteps"></div>
+
+          <input
+            type="text"
+            id="scanInput"
+            class="scan-input"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            aria-hidden="true"
+            tabindex="-1"
+          />
+        </div>
+
+        <div id="summaryPanel" class="summary-panel">
+          <header class="summary-header">
+            <p class="summary-label">SUMMARY</p>
+            <h2 id="summaryItemName">C AMCL</h2>
+            <p id="summaryMeta">PB-BL03.3 · C01160626B</p>
+          </header>
+
+          <div class="summary-content">
+            <section class="summary-card">
+              <div class="summary-card-head">น้ำหนัก</div>
+              <div class="summary-card-body">
+                <div class="summary-row">
+                  <span>เป้าหมาย</span>
+                  <strong id="summaryTarget">20.00 kg</strong>
+                </div>
+                <div class="summary-row">
+                  <span>น้ำหนักสุทธิ (Net)</span>
+                  <strong id="summaryNet">19.96 kg</strong>
+                </div>
+                <div class="summary-row summary-row--highlight">
+                  <span>น้ำหนักรวม (Gross)</span>
+                  <strong id="summaryGross">145.26 kg</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="summary-card">
+              <div class="summary-card-head">รายละเอียด</div>
+              <div class="summary-card-body">
+                <div class="summary-row">
+                  <span>ชื่อผลิตภัณฑ์</span>
+                  <strong id="summaryProductName">POSE LIQUID SOAP</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Batch No.</span>
+                  <strong id="summaryBatchNo">C01160626B</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Lot วัตถุดิบ</span>
+                  <strong id="summaryMaterialLot">L26070608</strong>
+                </div>
+                <div class="summary-row">
+                  <span>รหัสควบคุม</span>
+                  <strong id="summaryControlCode">L26070608</strong>
+                </div>
+                <div class="summary-row">
+                  <span>ผู้ชั่ง</span>
+                  <strong id="summaryWeigher">Admin</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="summary-card">
+              <div class="summary-card-head">ผู้ตรวจสอบ</div>
+              <div class="summary-card-body">
+                <select
+                  id="summaryInspector"
+                  class="summary-select"
+                  required
+                  aria-describedby="summaryInspectorError"
+                >
+                  <option value="">เลือกผู้ตรวจสอบ...</option>
+                  <option value="qc1">QC สมหญิง</option>
+                  <option value="qc2">QC วิชัย</option>
+                  <option value="qc3">QC ประภา</option>
+                </select>
+                <p
+                  class="summary-field-error"
+                  id="summaryInspectorError"
+                  hidden
+                >
+                  กรุณาเลือกผู้ตรวจสอบ
+                </p>
+              </div>
+            </section>
+          </div>
+
+          <div class="summary-actions">
+            <button
+              type="button"
+              class="summary-print-btn"
+              id="summaryPrintBtn"
+            >
+              <i class="fa-solid fa-print"></i>
+              ปริ้นใบบันทึก
+            </button>
+            <button type="button" class="summary-save-btn" id="summarySaveBtn">
+              บันทึก &amp; กลับหน้ารายการ
+            </button>
+          </div>
+        </div>
+
+        <div id="printPreviewPanel" class="print-preview-panel">
+          <header class="print-preview-header">
+            <button
+              class="print-preview-back"
+              id="backFromPrintPreview"
+              type="button"
+              aria-label="กลับ"
+            >
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <h2>ตัวอย่างใบป้ายภาชนะ</h2>
+          </header>
+
+          <div class="print-preview-content">
+            <article class="weighing-tag" id="weighingTag">
+              <div class="weighing-tag-section weighing-tag-section--head">
+                <div class="weighing-tag-head-left">
+                  <p class="weighing-tag-title">
+                    บันทึกประจำภาชนะ วัตถุดิบทุกชนิด
+                  </p>
+                  <p class="weighing-tag-subtitle">Weighing Tag</p>
+                </div>
+                <span class="weighing-tag-brand">POSE</span>
+              </div>
+
+              <div class="weighing-tag-section weighing-tag-section--date-qr">
+                <div class="weighing-tag-date-col">
+                  <div class="weighing-tag-stack">
+                    <span>วันที่สั่งผลิต</span>
+                    <strong id="tagProductionDate">09-06-2026</strong>
+                  </div>
+                  <div class="weighing-tag-stack">
+                    <span>Batch No.</span>
+                    <strong id="tagBatchNo">C01160626B</strong>
+                  </div>
+                </div>
+                <div class="weighing-tag-qr">
+                  <div class="weighing-tag-qr-box">
+                    <i class="fa-solid fa-qrcode"></i>
+                  </div>
+                  <span id="tagQrCode">C01160626B</span>
+                </div>
+              </div>
+
+              <div class="weighing-tag-section weighing-tag-section--product">
+                <div class="weighing-tag-stack">
+                  <span>ชื่อผลิตภัณฑ์</span>
+                  <strong id="tagProductName">POSE LIQUID SOAP</strong>
+                </div>
+                <div class="weighing-tag-stack">
+                  <span>Batch Size</span>
+                  <strong id="tagBatchSize">800.00 Kg.</strong>
+                </div>
+                <div class="weighing-tag-grid-2">
+                  <div class="weighing-tag-stack">
+                    <span>รหัสวัตถุดิบ</span>
+                    <strong id="tagMaterialCode">C AMCL</strong>
+                  </div>
+                  <div class="weighing-tag-stack">
+                    <span>Lot วัตถุดิบ</span>
+                    <strong id="tagMaterialLot">L26070609</strong>
+                  </div>
+                </div>
+                <div class="weighing-tag-stack">
+                  <span>รหัสควบคุม</span>
+                  <strong id="tagControlCode">L26070609</strong>
+                </div>
+                <div class="weighing-tag-stack">
+                  <span>ลักษณะ</span>
+                  <strong id="tagAppearance">ผงสีขาว ละเอียด</strong>
+                </div>
+              </div>
+
+              <div class="weighing-tag-section weighing-tag-section--weights">
+                <div class="weighing-tag-weight-row">
+                  <span>น้ำหนักสุทธิ (Net)</span>
+                  <strong id="tagNetWeight">19.9600 kg.</strong>
+                </div>
+                <div
+                  class="weighing-tag-weight-row weighing-tag-weight-row--gross"
+                >
+                  <span>รวมน้ำหนัก (Gross)</span>
+                  <strong id="tagGrossWeight">145.2600 kg.</strong>
+                </div>
+              </div>
+
+              <div class="weighing-tag-section weighing-tag-section--footer">
+                <p class="weighing-tag-signature">
+                  <span>ผู้รับผิดชอบ :</span>
+                  <strong id="tagWeigher">Admin</strong>
+                </p>
+                <p class="weighing-tag-signature">
+                  <span>ผู้ตรวจสอบ :</span>
+                  <strong id="tagInspector">—</strong>
+                </p>
+              </div>
+            </article>
+          </div>
+
+          <div class="print-preview-actions">
+            <button
+              type="button"
+              class="print-preview-send-btn"
+              id="sendPrintBtn"
+            >
+              <i class="fa-solid fa-print"></i>
+              ส่งปริ้น
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
     <script src="./js/splash.js"></script>
+    <script src="./js/auth.js"></script>
     <script src="./js/main.js"></script>
+    <script src="./js/weighing.js"></script>
   </body>
 </html>

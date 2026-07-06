@@ -1,6 +1,25 @@
-const API_URL = "http://localhost:3000/api";
+const API_URL = "/api";
+
+function showLoginError(message) {
+  const errorBox = document.getElementById("login-error");
+  const errorText = document.getElementById("login-error-text");
+
+  if (!errorBox || !errorText) return;
+
+  errorText.textContent = message;
+  errorBox.hidden = false;
+}
+
+function hideLoginError() {
+  const errorBox = document.getElementById("login-error");
+  if (!errorBox) return;
+
+  errorBox.hidden = true;
+}
 
 async function login() {
+  hideLoginError();
+
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
   const rememberMe = document.getElementById("rememberMe")?.checked;
@@ -15,14 +34,17 @@ async function login() {
       body: JSON.stringify({ username, password, rememberMe }),
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Login failed");
-      return;
+    let data = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = {};
     }
 
-    alert("Login success");
+    if (!res.ok) {
+      showLoginError(data.message || "เข้าสู่ระบบไม่สำเร็จ");
+      return;
+    }
 
     if (rememberMe) {
       localStorage.setItem("rememberedUser", username);
@@ -33,26 +55,7 @@ async function login() {
     window.location.href = "/main.html";
   } catch (err) {
     console.error(err);
-  }
-}
-
-async function requireAuth(redirectIfLoggedIn = false) {
-  try {
-    const res = await fetch(`${API_URL}/me`, {
-      credentials: "include",
-    });
-
-    const isLoggedIn = res.ok;
-
-    if (redirectIfLoggedIn && isLoggedIn) {
-      window.location.href = "/main.html";
-    }
-
-    if (!redirectIfLoggedIn && !isLoggedIn) {
-      window.location.href = "/";
-    }
-  } catch (err) {
-    window.location.href = "/";
+    showLoginError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
   }
 }
 

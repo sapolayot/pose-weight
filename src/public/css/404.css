@@ -1,0 +1,29 @@
+.not-found-page {
+  text-align: center;
+  padding: 80px 24px 40px;
+}
+
+.not-found-page h1 {
+  font-size: 72px;
+  font-weight: 700;
+  color: #5195cb;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.not-found-page p {
+  font-size: 15px;
+  color: #64748b;
+  margin-bottom: 28px;
+}
+
+.not-found-link {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #5195cb;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 500;
+}

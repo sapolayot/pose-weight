@@ -11,15 +11,11 @@ export interface UpdateLoginRequest {
 }
 
 export interface LoginResponse {
-  id: number;
+  loginCode: number;
 
-  name: string;
+  firstName: string;
 
   email: string;
-
-  createdAt: Date;
-
-  updatedAt: Date;
 }
 
 export interface ApiResponse<T> {
