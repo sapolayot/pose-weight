@@ -416,6 +416,10 @@
   border-color: #86efac;
 }
 
+.material-card--completed-rounds {
+  padding-bottom: 10px;
+}
+
 .material-card--partial {
   padding-bottom: 10px;
 }

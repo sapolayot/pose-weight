@@ -14,10 +14,20 @@ export async function searchWhStockTransmitIso(
       typeof req.query.limit === "string"
         ? Number.parseInt(req.query.limit, 10)
         : 200;
+    const statusParam =
+      typeof req.query.status === "string" ? req.query.status : undefined;
+    let status: number | undefined;
+
+    if (statusParam === "0") {
+      status = 0;
+    } else if (statusParam === "1") {
+      status = 1;
+    }
 
     const data = await service.searchProductionList({
       q,
       limit: Number.isFinite(limit) ? limit : 200,
+      status,
     });
 
     res.json({

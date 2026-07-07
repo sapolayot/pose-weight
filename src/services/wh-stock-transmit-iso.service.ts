@@ -13,8 +13,9 @@ export default class WhStockTransmitIsoService {
   ): Promise<ProductionListItem[]> {
     const query = params.q?.trim() ?? "";
     const limit = params.limit ?? 200;
+    const status = params.status ?? undefined;
 
-    const rows = await this.repo.searchActive(query, limit);
+    const rows = await this.repo.searchActive(query, limit, status);
 
     return rows.map((row) =>
       new WhStockTransmitIso(row).toProductionListItem(),

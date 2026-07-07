@@ -68,45 +68,8 @@ function renderPrintButton() {
   return `<button class="print-btn" type="button" aria-label="พิมพ์"><i class="fa-solid fa-print"></i></button>`;
 }
 
-function renderCompletedCard(item, type) {
-  const detailLines = [];
-
-  if (item.code) {
-    detailLines.push(`รหัสคุม: ${item.code}`);
-  }
-  if (item.lot) {
-    detailLines.push(`Lot: ${item.lot}`);
-  }
-
-  return `
-    <div
-      class="material-card material-card--completed"
-      data-type="${type}"
-      data-item-name="${item.name}"
-      data-item-code="${item.code || ""}"
-      data-item-lot="${item.lot || ""}"
-      data-item-amount="${item.withdrawn}"
-      data-item-unit="${item.unit}"
-    >
-      <div class="material-card-main">
-        <div class="material-icon material-icon--check">
-          <i class="fa-solid fa-check"></i>
-        </div>
-        <div class="material-info">
-          <span class="material-name">${item.name}</span>
-          ${detailLines.map((line) => `<p class="material-detail">${line}</p>`).join("")}
-          <p class="material-qty material-qty--green">
-            ยอดเบิก ${formatAmount(item.withdrawn)} / ${formatAmount(item.total)} ${item.unit}
-          </p>
-        </div>
-        ${renderPrintButton()}
-      </div>
-    </div>
-  `;
-}
-
-function renderPartialCard(item, type) {
-  const roundsHtml = (item.rounds || [])
+function renderRoundItems(item, type, { showPending = true } = {}) {
+  return (item.rounds || [])
     .map((round) => {
       if (round.status === "done") {
         const detailLines = [
@@ -136,6 +99,8 @@ function renderPartialCard(item, type) {
         `;
       }
 
+      if (!showPending) return "";
+
       return `
         <div class="round-item round-item--pending">
           <span class="round-dot round-dot--yellow"></span>
@@ -156,7 +121,59 @@ function renderPartialCard(item, type) {
         </div>
       `;
     })
+    .filter(Boolean)
     .join("");
+}
+
+function renderCompletedCard(item, type) {
+  const hasRounds = item.rounds?.length > 0;
+  const detailLines = [];
+
+  if (item.code) {
+    detailLines.push(`รหัสคุม: ${item.code}`);
+  }
+  if (!hasRounds && item.lot) {
+    detailLines.push(`Lot: ${item.lot}`);
+  }
+
+  const roundsHtml = hasRounds
+    ? `<div class="material-rounds">${renderRoundItems(item, type, { showPending: false })}</div>`
+    : "";
+
+  const cardClass = hasRounds
+    ? "material-card material-card--completed material-card--completed-rounds"
+    : "material-card material-card--completed";
+
+  return `
+    <div
+      class="${cardClass}"
+      data-type="${type}"
+      data-item-name="${item.name}"
+      data-item-code="${item.code || ""}"
+      data-item-lot="${item.lot || ""}"
+      data-item-amount="${item.withdrawn}"
+      data-item-unit="${item.unit}"
+    >
+      <div class="material-card-main">
+        <div class="material-icon material-icon--check">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <div class="material-info">
+          <span class="material-name">${item.name}</span>
+          ${detailLines.map((line) => `<p class="material-detail">${line}</p>`).join("")}
+          <p class="material-qty material-qty--green">
+            ยอดเบิก ${formatAmount(item.withdrawn)} / ${formatAmount(item.total)} ${item.unit}
+          </p>
+        </div>
+        ${hasRounds ? "" : renderPrintButton()}
+      </div>
+      ${roundsHtml}
+    </div>
+  `;
+}
+
+function renderPartialCard(item, type) {
+  const roundsHtml = renderRoundItems(item, type);
 
   return `
     <div class="material-card material-card--partial" data-type="${type}">
@@ -266,7 +283,6 @@ function groupRowsByMaterialKey(rows) {
 }
 
 function getRowAmount(row) {
-  console.log("getRowAmount", row);
   const qty = Number(row.qty);
   if (qty > 0) return qty;
   return 0;
@@ -357,6 +373,7 @@ function buildMaterialItem(rows) {
       mapRowToRound(row, index + 1, unit, effectiveTotal),
     );
     const withdrawn = first.sumQty ? Number(first.sumQty) : 0;
+    const allDone = rounds.every((row) => row.status === "done");
 
     return {
       name,
@@ -364,7 +381,7 @@ function buildMaterialItem(rows) {
       withdrawn,
       total: effectiveTotal,
       unit,
-      status: "partial",
+      status: allDone ? "completed" : "partial",
       rounds,
     };
   }
@@ -384,13 +401,15 @@ function buildMaterialItem(rows) {
   }
 
   if (withdrawn > 0) {
+    const allDone = sorted.every((row) => Number(row.status) === 1);
+
     return {
       name,
       code,
       withdrawn,
       total: effectiveTotal,
       unit,
-      status: "partial",
+      status: allDone ? "completed" : "partial",
       rounds: buildRoundsFromRows(sorted, effectiveTotal, unit, withdrawn),
     };
   }
@@ -619,13 +638,19 @@ function bindProductionListItems() {
 }
 
 let productionSearchTimer = null;
+let productionStatusFilter = "all";
 
-async function loadProductionList(query = "") {
+async function loadProductionList(
+  query = "",
+  statusFilter = productionStatusFilter,
+) {
   const listEl = document.getElementById("productionList");
   const emptyEl = document.getElementById("productionEmpty");
   const loadingEl = document.getElementById("productionLoading");
 
   if (!listEl) return;
+
+  productionStatusFilter = statusFilter;
 
   if (loadingEl) loadingEl.hidden = false;
   if (emptyEl) {
@@ -637,6 +662,9 @@ async function loadProductionList(query = "") {
     const params = new URLSearchParams();
     if (query.trim()) {
       params.set("q", query.trim());
+    }
+    if (statusFilter === "0" || statusFilter === "1") {
+      params.set("status", statusFilter);
     }
 
     const response = await fetch(
@@ -678,7 +706,7 @@ function handleProductionSearchInput() {
   productionSearchTimer = setTimeout(() => {
     const query =
       document.getElementById("productionSearch")?.value.trim() || "";
-    loadProductionList(query);
+    loadProductionList(query, productionStatusFilter);
   }, 300);
 }
 
@@ -746,6 +774,11 @@ document.addEventListener("DOMContentLoaded", () => {
         .querySelectorAll(".filter-tabs .tab-btn")
         .forEach((btn) => btn.classList.remove("active"));
       button.classList.add("active");
+
+      const statusFilter = button.dataset.statusFilter || "all";
+      const query =
+        document.getElementById("productionSearch")?.value.trim() || "";
+      loadProductionList(query, statusFilter);
     });
   });
 
