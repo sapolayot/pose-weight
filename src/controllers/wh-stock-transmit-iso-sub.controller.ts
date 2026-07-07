@@ -11,8 +11,6 @@ export async function getByDocNo(
   try {
     const docNo = typeof req.params.docNo === "string" ? req.params.docNo : "";
 
-    console.log("docNo", docNo);
-
     const data = await service.getByDocNo(docNo);
 
     res.json({
