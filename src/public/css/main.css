@@ -360,6 +360,19 @@
   width: 0;
 }
 
+.withdraw-loading,
+.withdraw-error,
+.withdraw-empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.withdraw-error {
+  color: #dc2626;
+}
+
 .material-section + .material-section {
   margin-top: 18px;
 }

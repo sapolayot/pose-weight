@@ -35,180 +35,7 @@ function initWelcomeText() {
   );
 }
 
-const productionMaterials = {
-  C01: {
-    chemical: [
-      {
-        name: "C CKD",
-        code: "R001",
-        lot: "R2406021",
-        withdrawn: 3,
-        total: 3,
-        unit: "kg",
-        status: "completed",
-      },
-      {
-        name: "C TX70",
-        withdrawn: 300,
-        total: 500,
-        unit: "g",
-        status: "partial",
-        rounds: [
-          {
-            round: 1,
-            lot: "L2405010",
-            code: "R002-A",
-            amount: 300,
-            unit: "g",
-            status: "done",
-          },
-          {
-            round: 2,
-            needed: 200,
-            unit: "g",
-            status: "pending",
-          },
-        ],
-      },
-      {
-        name: "C AMCL",
-        withdrawn: 0,
-        total: 20,
-        unit: "kg",
-        status: "pending",
-      },
-      {
-        name: "C EUPL",
-        withdrawn: 0,
-        total: 5,
-        unit: "kg",
-        status: "pending",
-      },
-      {
-        name: "DI water",
-        withdrawn: 0,
-        total: 500,
-        unit: "kg",
-        status: "pending",
-      },
-    ],
-    packaging: [
-      {
-        name: "1.5P Pump สีชมพู",
-        code: "P001",
-        withdrawn: 0,
-        total: 200,
-        unit: "ชิ้น",
-        status: "pending",
-      },
-      {
-        name: "ฝาเกลียว",
-        code: "P002",
-        withdrawn: 0,
-        total: 800,
-        unit: "ใบ",
-        status: "pending",
-      },
-      {
-        name: "สติ๊กเกอร์",
-        code: "P003",
-        withdrawn: 0,
-        total: 800,
-        unit: "ใบ",
-        status: "pending",
-      },
-    ],
-  },
-  D42: {
-    chemical: [
-      {
-        name: "Sodium Chlorite",
-        code: "R010",
-        lot: "R2405102",
-        withdrawn: 126.69,
-        total: 126.69,
-        unit: "kg",
-        status: "completed",
-      },
-      {
-        name: "DI water",
-        withdrawn: 0,
-        total: 50,
-        unit: "kg",
-        status: "pending",
-      },
-    ],
-    packaging: [
-      {
-        name: "ถัง HDPE 25L",
-        code: "P010",
-        withdrawn: 0,
-        total: 6,
-        unit: "ใบ",
-        status: "pending",
-      },
-    ],
-  },
-  "D27-1": {
-    chemical: [
-      {
-        name: "Q-BAC 2A",
-        code: "R020",
-        withdrawn: 1200,
-        total: 2000,
-        unit: "Lt.",
-        status: "partial",
-        rounds: [
-          {
-            round: 1,
-            lot: "R2406011",
-            amount: 1200,
-            unit: "Lt.",
-            status: "done",
-          },
-          {
-            round: 2,
-            needed: 800,
-            unit: "Lt.",
-            status: "pending",
-          },
-        ],
-      },
-    ],
-    packaging: [
-      {
-        name: "ถัง 200L",
-        code: "P020",
-        withdrawn: 0,
-        total: 10,
-        unit: "ใบ",
-        status: "pending",
-      },
-    ],
-  },
-  "D27-2": {
-    chemical: [
-      {
-        name: "Q-BAC 2A",
-        code: "R020",
-        withdrawn: 0,
-        total: 2000,
-        unit: "Lt.",
-        status: "pending",
-      },
-    ],
-    packaging: [
-      {
-        name: "ถัง 200L",
-        code: "P020",
-        withdrawn: 0,
-        total: 10,
-        unit: "ใบ",
-        status: "pending",
-      },
-    ],
-  },
-};
+let withdrawMaterialsCache = null;
 
 async function logout() {
   try {
@@ -398,22 +225,249 @@ function renderSection(title, items, type) {
   `;
 }
 
-function renderWithdrawContent(productId, filter = "all") {
-  const data = productionMaterials[productId] || productionMaterials.C01;
+function compareRowId(a, b) {
+  const aNum = Number(a.id);
+  const bNum = Number(b.id);
+
+  if (
+    Number.isFinite(aNum) &&
+    Number.isFinite(bNum) &&
+    String(a.id).trim() !== "" &&
+    String(b.id).trim() !== ""
+  ) {
+    return aNum - bNum;
+  }
+
+  return String(a.id ?? "").localeCompare(String(b.id ?? ""), undefined, {
+    numeric: true,
+  });
+}
+
+function sortRowsById(rows) {
+  return [...rows].sort(compareRowId);
+}
+
+function getMaterialGroupKey(row) {
+  return `${row.itemCode ?? ""}\0${row.docNo ?? ""}\0${row.refCode ?? ""}`;
+}
+
+function groupRowsByMaterialKey(rows) {
+  const groups = new Map();
+
+  rows.forEach((row) => {
+    const key = getMaterialGroupKey(row);
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key).push(row);
+  });
+
+  return groups;
+}
+
+function getRowAmount(row) {
+  console.log("getRowAmount", row);
+  const qty = Number(row.qty);
+  if (qty > 0) return qty;
+  return 0;
+}
+
+function getRowNeeded(row, fallbackTotal) {
+  const qty = Number(row.qtyTmp);
+  if (qty > 0) return qty;
+
+  const target = Number(row.bomQty) || Number(row.qtyImport);
+  if (target > 0) return target;
+
+  return fallbackTotal;
+}
+
+function mapRowToRound(row, roundNumber, unit, fallbackTotal) {
+  if (Number(row.status) === 1) {
+    return {
+      round: roundNumber,
+      lot: row.lotNo || "",
+      code: row.refCode || row.itemCode || "",
+      amount: getRowAmount(row),
+      unit,
+      status: "done",
+    };
+  }
+
+  return {
+    round: roundNumber,
+    needed: getRowNeeded(row, fallbackTotal),
+    unit,
+    status: "pending",
+  };
+}
+
+function buildRoundsFromRows(rows, total, unit, withdrawn) {
+  const sorted = sortRowsById(rows);
+  const doneRows = sorted.filter(
+    (row) => Number(row.status) === 1 && (Number(row.qtyTmp) > 0 || row.lotNo),
+  );
+
+  let rounds = doneRows.map((row, index) => ({
+    round: index + 1,
+    lot: row.lotNo || "",
+    code: row.refCode || row.itemCode || "",
+    amount: getRowAmount(row),
+    unit,
+    status: "done",
+  }));
+
+  if (rounds.length === 0 && withdrawn > 0) {
+    rounds = [
+      {
+        round: 1,
+        lot: sorted[0]?.lotNo || "",
+        code: sorted[0]?.refCode || sorted[0]?.itemCode || "",
+        amount: withdrawn,
+        unit,
+        status: "done",
+      },
+    ];
+  }
+
+  const remain = Math.max(total - withdrawn, 0);
+  if (remain > 0) {
+    rounds.push({
+      round: rounds.length + 1,
+      needed: remain,
+      unit,
+      status: "pending",
+    });
+  }
+
+  return rounds;
+}
+
+function buildMaterialItem(rows) {
+  const sorted = sortRowsById(rows);
+  const first = sorted[0];
+  const name = first.barcode || "—";
+  const code = first.refCode || first.itemCode || "";
+  const unit = first.unitName || first.unitAltName || "—";
+  const total = first.bomQty ? Number(first.bomQty) : 0;
+  const effectiveTotal = total > 0 ? total : 0;
+
+  if (sorted.length > 1) {
+    const rounds = sorted.map((row, index) =>
+      mapRowToRound(row, index + 1, unit, effectiveTotal),
+    );
+    const withdrawn = first.sumQty ? Number(first.sumQty) : 0;
+
+    return {
+      name,
+      code,
+      withdrawn,
+      total: effectiveTotal,
+      unit,
+      status: "partial",
+      rounds,
+    };
+  }
+
+  const withdrawn = Number(first.sumQty) || 0;
+
+  if (effectiveTotal > 0 && withdrawn >= effectiveTotal) {
+    return {
+      name,
+      code,
+      lot: first.lotNo || first.refCode || "",
+      withdrawn: effectiveTotal,
+      total: effectiveTotal,
+      unit,
+      status: "completed",
+    };
+  }
+
+  if (withdrawn > 0) {
+    return {
+      name,
+      code,
+      withdrawn,
+      total: effectiveTotal,
+      unit,
+      status: "partial",
+      rounds: buildRoundsFromRows(sorted, effectiveTotal, unit, withdrawn),
+    };
+  }
+
+  return {
+    name,
+    code,
+    withdrawn: 0,
+    total: effectiveTotal,
+    unit,
+    status: "pending",
+  };
+}
+
+function mapSubItemsToMaterials(apiRows) {
+  const chemicalRows = apiRows.filter((row) => Number(row.grp1) === 2);
+  const packagingRows = apiRows.filter((row) => Number(row.grp1) !== 2);
+
+  return {
+    chemical: Array.from(groupRowsByMaterialKey(chemicalRows).values()).map(
+      buildMaterialItem,
+    ),
+    packaging: Array.from(groupRowsByMaterialKey(packagingRows).values()).map(
+      buildMaterialItem,
+    ),
+  };
+}
+
+async function fetchWithdrawMaterials(docNo) {
+  const response = await fetch(
+    `${API_URL}/wh-stock-transmit-iso-sub/${encodeURIComponent(docNo)}`,
+    { credentials: "include" },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to load withdraw materials");
+  }
+
+  const payload = await response.json();
+  const rows = Array.isArray(payload.data) ? payload.data : [];
+
+  return mapSubItemsToMaterials(rows);
+}
+
+function renderWithdrawLoading() {
+  return `<p class="withdraw-loading">กำลังโหลดรายการวัตถุดิบ...</p>`;
+}
+
+function renderWithdrawError(message) {
+  return `<p class="withdraw-error">${escapeHtml(message)}</p>`;
+}
+
+function renderWithdrawContent(filter = "all") {
+  const data = withdrawMaterialsCache;
+
+  if (!data) {
+    return renderWithdrawLoading();
+  }
+
   const sections = [];
 
-  if (filter === "all" || filter === "R") {
+  if ((filter === "all" || filter === "R") && data.chemical.length > 0) {
     sections.push(renderSection("วัตถุดิบเคมี (R)", data.chemical, "R"));
   }
 
-  if (filter === "all" || filter === "P") {
+  if ((filter === "all" || filter === "P") && data.packaging.length > 0) {
     sections.push(renderSection("บรรจุภัณฑ์ (P)", data.packaging, "P"));
+  }
+
+  if (sections.length === 0) {
+    return `<p class="withdraw-empty">ไม่พบรายการวัตถุดิบ</p>`;
   }
 
   return sections.join("");
 }
 
-function openWithdrawPanel(item) {
+async function openWithdrawPanel(item) {
   const panel = document.getElementById("withdrawPanel");
   const productId =
     item.getAttribute("data-product-code") || item.getAttribute("data-id");
@@ -421,6 +475,7 @@ function openWithdrawPanel(item) {
   const lot = item.getAttribute("data-lot");
   const amount = item.getAttribute("data-amount");
   const unit = item.getAttribute("data-unit");
+  const docNo = item.getAttribute("data-doc") || "";
 
   document.getElementById("withdrawTitle").textContent = name;
   document.getElementById("withdrawMeta").textContent =
@@ -428,7 +483,7 @@ function openWithdrawPanel(item) {
 
   panel.dataset.productId = productId;
   panel.dataset.batchLot = lot;
-  panel.dataset.docNo = item.getAttribute("data-doc") || "";
+  panel.dataset.docNo = docNo;
   panel.dataset.batchSize = amount || "";
   panel.dataset.batchUnit = unit || "";
   panel.dataset.productionDate = item.getAttribute("data-date") || "";
@@ -437,12 +492,21 @@ function openWithdrawPanel(item) {
     tab.classList.toggle("active", tab.dataset.filter === "all");
   });
 
-  document.getElementById("withdrawContent").innerHTML = renderWithdrawContent(
-    productId,
-    "all",
-  );
-
   panel.classList.add("active");
+  document.getElementById("withdrawContent").innerHTML =
+    renderWithdrawLoading();
+
+  try {
+    withdrawMaterialsCache = await fetchWithdrawMaterials(docNo);
+    document.getElementById("withdrawContent").innerHTML =
+      renderWithdrawContent("all");
+  } catch (error) {
+    console.error(error);
+    withdrawMaterialsCache = null;
+    document.getElementById("withdrawContent").innerHTML = renderWithdrawError(
+      "ไม่สามารถโหลดรายการวัตถุดิบได้",
+    );
+  }
 }
 
 function getWithdrawProductContext() {
@@ -495,20 +559,18 @@ function collectWithdrawPrintContext(printBtn) {
 
 function closeWithdrawPanel() {
   document.getElementById("withdrawPanel").classList.remove("active");
+  withdrawMaterialsCache = null;
 }
 
 function setWithdrawFilter(filter) {
   const panel = document.getElementById("withdrawPanel");
-  const productId = panel.dataset.productId || "C01";
 
   panel.querySelectorAll(".withdraw-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.filter === filter);
   });
 
-  document.getElementById("withdrawContent").innerHTML = renderWithdrawContent(
-    productId,
-    filter,
-  );
+  document.getElementById("withdrawContent").innerHTML =
+    renderWithdrawContent(filter);
 }
 
 function escapeHtml(value) {

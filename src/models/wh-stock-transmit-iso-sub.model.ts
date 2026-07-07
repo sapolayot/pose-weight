@@ -25,6 +25,7 @@ export default class WhStockTransmitIsoSub implements WhStockTransmitIsoSubRecor
   invCode: string;
   lotNo: string;
   refCode: string;
+  qty: number;
   qtyTmp: number;
   isMaster: number;
   qtyImport: number;
@@ -50,6 +51,7 @@ export default class WhStockTransmitIsoSub implements WhStockTransmitIsoSubRecor
     this.invCode = data.invCode ?? "";
     this.lotNo = data.lotNo ?? "";
     this.refCode = data.refCode ?? "";
+    this.qty = Number(data.qty ?? 0);
     this.qtyTmp = Number(data.qtyTmp ?? 0);
     this.isMaster = Number(data.isMaster ?? 0);
     this.qtyImport = Number(data.qtyImport ?? 0);
@@ -76,6 +78,7 @@ export default class WhStockTransmitIsoSub implements WhStockTransmitIsoSubRecor
       lotNo: this.lotNo,
       refCode: this.refCode,
       status: this.status,
+      qty: this.qty,
       qtyTmp: this.qtyTmp,
       isMaster: this.isMaster,
       qtyImport: this.qtyImport,

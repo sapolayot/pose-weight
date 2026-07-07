@@ -12,6 +12,7 @@ export interface WhStockTransmitIsoSubRecord {
   lotNo: string;
   refCode: string;
   status: number;
+  qty: number;
   qtyTmp: number;
   isMaster: number;
   qtyImport: number;
@@ -38,6 +39,7 @@ export interface ProductionListItem {
   lotNo: string;
   refCode: string;
   status: number;
+  qty: number;
   qtyTmp: number;
   isMaster: number;
   qtyImport: number;

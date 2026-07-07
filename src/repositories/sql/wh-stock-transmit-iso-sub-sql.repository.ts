@@ -17,6 +17,7 @@ interface WhStockTransmitIsoSubRow extends RowDataPacket {
   lotNo: string;
   refCode: string;
   status: number;
+  qty: number;
   qtyTmp: number;
   isMaster: number;
   qtyImport: number;
@@ -45,6 +46,7 @@ export default class WhStockTransmitIsoSubSqlRepository implements WhStockTransm
           COALESCE(wh_stock_transmit_iso_sub.LotNo, '') AS lotNo,  
           COALESCE( wh_inventory.DocCode , '') AS refCode,
           IF(wh_stock_transmit_iso_sub.Status,'1','0') AS status,
+          wh_stock_transmit_iso_sub.Qty as qty,  
           wh_stock_transmit_iso_sub.Qty_tmp as qtyTmp,  
           IF(wh_stock_transmit_iso_sub.IsMaster,'1','0') AS isMaster,
           (
@@ -145,6 +147,7 @@ export default class WhStockTransmitIsoSubSqlRepository implements WhStockTransm
       lotNo: row.lotNo,
       refCode: row.refCode,
       status: row.status,
+      qty: row.qty,
       qtyTmp: row.qtyTmp,
       isMaster: row.isMaster,
       qtyImport: row.qtyImport,
