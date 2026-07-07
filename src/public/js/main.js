@@ -321,6 +321,7 @@ function renderPartialCard(item, type) {
             type="button"
             data-type="${type}"
             data-item-name="${item.name}"
+            data-item-code="${item.code || ""}"
             data-round="${round.round}"
             data-round-needed="${round.needed}"
             data-item-unit="${round.unit}"
@@ -357,6 +358,7 @@ function renderPendingCard(item, type) {
       class="material-card material-card--clickable"
       data-type="${type}"
       data-item-name="${item.name}"
+      data-item-code="${item.code || ""}"
       data-item-total="${item.total}"
       data-item-withdrawn="${item.withdrawn || 0}"
       data-item-unit="${item.unit}"
@@ -448,6 +450,7 @@ function getWithdrawProductContext() {
 
   return {
     productName: document.getElementById("withdrawTitle").textContent,
+    productCode: panel.dataset.productId || "",
     batchNo: panel.dataset.batchLot || "",
     docNo: panel.dataset.docNo || "PB-BL03.3",
     batchSize: panel.dataset.batchSize || "",
@@ -638,6 +641,7 @@ document.addEventListener("DOMContentLoaded", () => {
           openWeighPanel({
             type: weighBtn.dataset.type,
             name: weighBtn.dataset.itemName,
+            itemCode: weighBtn.dataset.itemCode || "",
             amount: Number(weighBtn.dataset.roundNeeded),
             unit: weighBtn.dataset.itemUnit,
             round: Number(weighBtn.dataset.round),
@@ -666,6 +670,7 @@ document.addEventListener("DOMContentLoaded", () => {
         openWeighPanel({
           type: card.dataset.type,
           name: card.dataset.itemName,
+          itemCode: card.dataset.itemCode || "",
           amount: total - withdrawn,
           unit: card.dataset.itemUnit,
           ...getWithdrawProductContext(),

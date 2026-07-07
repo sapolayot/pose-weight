@@ -34,25 +34,26 @@
               </button>
             </div>
             <p class="welcome-text" id="welcome-text"></p>
+            <div class="header-panel">
+              <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input
+                  type="search"
+                  id="productionSearch"
+                  placeholder="ค้นหา รหัส / ชื่อ / Lot..."
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="filter-tabs">
+                <button class="tab-btn active" type="button">ทั้งหมด</button>
+                <button class="tab-btn" type="button">ค้างเบิก</button>
+                <button class="tab-btn" type="button">เสร็จแล้ว</button>
+              </div>
+            </div>
           </header>
 
           <main class="app-content">
-            <div class="search-box">
-              <i class="fa-solid fa-magnifying-glass search-icon"></i>
-              <input
-                type="search"
-                id="productionSearch"
-                placeholder="ค้นหา รหัส / ชื่อ / Lot..."
-                autocomplete="off"
-              />
-            </div>
-
-            <div class="filter-tabs">
-              <button class="tab-btn active" type="button">ทั้งหมด</button>
-              <button class="tab-btn" type="button">ค้างเบิก</button>
-              <button class="tab-btn" type="button">เสร็จแล้ว</button>
-            </div>
-
             <div class="production-list" id="productionList">
               <p class="production-loading" id="productionLoading">
                 กำลังโหลดรายการผลิต...
@@ -67,47 +68,54 @@
 
         <div id="withdrawPanel" class="withdraw-panel">
           <header class="withdraw-header">
-            <button
-              class="back-btn"
-              id="backToList"
-              type="button"
-              aria-label="กลับ"
-            >
-              <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <p class="withdraw-label">เบิกเคมี และ บรรจุภัณฑ์</p>
-            <h2 id="withdrawTitle">C01: POSE LIQUID SOAP</h2>
-            <p id="withdrawMeta">จำนวน: 800.00 Kg. · Lot: C01160626B</p>
-          </header>
+            <div class="withdraw-header-body">
+              <button
+                class="back-btn"
+                id="backToList"
+                type="button"
+                aria-label="กลับ"
+              >
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <p class="withdraw-label">เบิกเคมี และ บรรจุภัณฑ์</p>
+              <h2 id="withdrawTitle">C01: POSE LIQUID SOAP</h2>
+              <p id="withdrawMeta">จำนวน: 800.00 Kg. · Lot: C01160626B</p>
+            </div>
 
-          <div class="withdraw-tabs">
-            <button class="withdraw-tab active" type="button" data-filter="all">
-              ทั้งหมด
-            </button>
-            <button class="withdraw-tab" type="button" data-filter="R">
-              เคมี (R)
-            </button>
-            <button class="withdraw-tab" type="button" data-filter="P">
-              บรรจุภัณฑ์ (P)
-            </button>
-          </div>
+            <div class="header-panel">
+              <div class="withdraw-tabs">
+                <button class="withdraw-tab active" type="button" data-filter="all">
+                  ทั้งหมด
+                </button>
+                <button class="withdraw-tab" type="button" data-filter="R">
+                  เคมี (R)
+                </button>
+                <button class="withdraw-tab" type="button" data-filter="P">
+                  บรรจุภัณฑ์ (P)
+                </button>
+              </div>
+            </div>
+          </header>
 
           <div class="withdraw-content" id="withdrawContent"></div>
         </div>
 
         <div id="weighPanel" class="weigh-panel">
           <header class="weigh-header">
-            <button
-              class="weigh-close-btn"
-              id="closeWeighPanel"
-              type="button"
-              aria-label="ปิด"
-            >
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-            <p class="weigh-label" id="weighLabel">ชั่งน้ำหนักเคมี</p>
-            <h2 id="weighItemName">C AMCL</h2>
-            <p id="weighAmount">ยอดเบิก: 20.00 kg</p>
+            <div class="weigh-header-body">
+              <button
+                class="weigh-close-btn"
+                id="closeWeighPanel"
+                type="button"
+                aria-label="ปิด"
+              >
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              <p class="weigh-label" id="weighLabel">ชั่งน้ำหนักเคมี</p>
+              <h2 id="weighItemName">C AMCL</h2>
+              <p id="weighAmount">ยอดเบิก: 20.00 kg</p>
+            </div>
+            <div class="header-panel header-panel--curve"></div>
           </header>
 
           <div class="weigh-steps" id="weighSteps"></div>
@@ -127,9 +135,12 @@
 
         <div id="summaryPanel" class="summary-panel">
           <header class="summary-header">
-            <p class="summary-label">SUMMARY</p>
-            <h2 id="summaryItemName">C AMCL</h2>
-            <p id="summaryMeta">PB-BL03.3 · C01160626B</p>
+            <div class="summary-header-body">
+              <p class="summary-label">SUMMARY</p>
+              <h2 id="summaryItemName">C AMCL</h2>
+              <p id="summaryMeta">PB-BL03.3 · C01160626B</p>
+            </div>
+            <div class="header-panel header-panel--curve"></div>
           </header>
 
           <div class="summary-content">
@@ -217,17 +228,107 @@
           </div>
         </div>
 
+        <div id="packagingSummaryPanel" class="summary-panel packaging-summary-panel">
+          <header class="summary-header">
+            <div class="summary-header-body">
+              <p class="summary-label">SUMMARY</p>
+              <h2 id="pkgSummaryItemName">1.5P Pump สีชมพู</h2>
+              <p id="pkgSummaryMeta">C01 · P001</p>
+            </div>
+            <div class="header-panel header-panel--curve"></div>
+          </header>
+
+          <div class="summary-content">
+            <section class="summary-card">
+              <div class="summary-card-head">จำนวน</div>
+              <div class="summary-card-body">
+                <div class="summary-row">
+                  <span>เป้าหมาย</span>
+                  <strong id="pkgSummaryTarget">200 ชิ้น</strong>
+                </div>
+                <div class="summary-row">
+                  <span id="pkgSummaryLotLine">Lot 1 — L26070702</span>
+                  <strong id="pkgSummaryLotQty">200 ชิ้น</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="summary-card">
+              <div class="summary-card-head">รายละเอียด</div>
+              <div class="summary-card-body">
+                <div class="summary-row">
+                  <span>ชื่อผลิตภัณฑ์</span>
+                  <strong id="pkgSummaryProductName">POSE LIQUID SOAP</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Batch No.</span>
+                  <strong id="pkgSummaryBatchNo">C01160626B</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Lot บรรจุภัณฑ์</span>
+                  <strong id="pkgSummaryPackagingLot">L26070702</strong>
+                </div>
+                <div class="summary-row">
+                  <span>รหัสควบคุม</span>
+                  <strong id="pkgSummaryControlCode">P001</strong>
+                </div>
+                <div class="summary-row">
+                  <span>ผู้บันทึก</span>
+                  <strong id="pkgSummaryRecorder">Admin</strong>
+                </div>
+                <div class="summary-row summary-row--highlight">
+                  <span>รวมทั้งหมด</span>
+                  <strong id="pkgSummaryTotal">200 ชิ้น</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="summary-card">
+              <div class="summary-card-head">ผู้ตรวจสอบ</div>
+              <div class="summary-card-body">
+                <select
+                  id="pkgSummaryInspector"
+                  class="summary-select"
+                  required
+                  aria-describedby="pkgSummaryInspectorError"
+                >
+                  <option value="">เลือกผู้ตรวจสอบ...</option>
+                  <option value="qc1">QC สมหญิง</option>
+                  <option value="qc2">QC วิชัย</option>
+                  <option value="qc3">QC ประภา</option>
+                </select>
+                <p
+                  class="summary-field-error"
+                  id="pkgSummaryInspectorError"
+                  hidden
+                >
+                  กรุณาเลือกผู้ตรวจสอบ
+                </p>
+              </div>
+            </section>
+          </div>
+
+          <div class="summary-actions summary-actions--single">
+            <button type="button" class="summary-save-btn" id="pkgSummarySaveBtn">
+              บันทึก &amp; กลับหน้ารายการ
+            </button>
+          </div>
+        </div>
+
         <div id="printPreviewPanel" class="print-preview-panel">
           <header class="print-preview-header">
-            <button
-              class="print-preview-back"
-              id="backFromPrintPreview"
-              type="button"
-              aria-label="กลับ"
-            >
-              <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <h2>ตัวอย่างใบป้ายภาชนะ</h2>
+            <div class="print-preview-header-body">
+              <button
+                class="print-preview-back"
+                id="backFromPrintPreview"
+                type="button"
+                aria-label="กลับ"
+              >
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <h2>ตัวอย่างใบป้ายภาชนะ</h2>
+            </div>
+            <div class="header-panel header-panel--curve"></div>
           </header>
 
           <div class="print-preview-content">
