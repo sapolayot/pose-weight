@@ -263,10 +263,7 @@ function buildPrintTagData({
     batchNo: batchNo || "—",
     qrCode: batchNo || "—",
     productName: formatTagProductName(productName || itemName),
-    batchSize:
-      batchSize && batchUnit
-        ? `${formatWeighAmount(Number(batchSize))} ${batchUnit}`
-        : "—",
+    batchSize: batchSize && batchUnit ? `${batchSize} ${batchUnit}` : "—",
     materialCode,
     materialLot,
     controlCode: code || materialLot,
@@ -527,11 +524,7 @@ function renderStepRow(step, { variant, summary = "" }) {
         <span class="weigh-step-title">${step.title}</span>
         ${summary ? `<span class="weigh-step-result">${summary}</span>` : ""}
       </div>
-      ${renderStepStatusIcon(
-        step.id,
-        statusVariant,
-        variant === "editable",
-      )}
+      ${renderStepStatusIcon(step.id, statusVariant, variant === "editable")}
     </div>
   `;
 }
@@ -680,7 +673,8 @@ function showPackagingSummaryPanel() {
   document.getElementById("weighPanel").classList.remove("active");
   hideSummaryPanels();
 
-  document.getElementById("pkgSummaryItemName").textContent = weighState.itemName;
+  document.getElementById("pkgSummaryItemName").textContent =
+    weighState.itemName;
   document.getElementById("pkgSummaryMeta").textContent =
     `${productCode} · ${itemCode}`;
   document.getElementById("pkgSummaryTarget").textContent = targetText;
@@ -1242,8 +1236,7 @@ function renderActiveStep(step) {
 
   const summary = getStepSummaryText(step);
   const desc = getStepDescription(step);
-  const rowSummary =
-    step.kind === "scan" && !scannedCode ? "" : summary;
+  const rowSummary = step.kind === "scan" && !scannedCode ? "" : summary;
 
   return `
     <div class="weigh-step weigh-step--active ${step.kind === "quantity" ? "weigh-step--quantity" : ""} ${getScanStepAlertClass(step)}">
@@ -1510,19 +1503,21 @@ function bindWeighStepEvents() {
     });
   });
 
-  document.getElementById("weighQtyInput")?.addEventListener("input", (event) => {
-    const stepId = weighState.currentStep;
-    const draft = getStepDraft(stepId);
-    const value = event.target.value;
+  document
+    .getElementById("weighQtyInput")
+    ?.addEventListener("input", (event) => {
+      const stepId = weighState.currentStep;
+      const draft = getStepDraft(stepId);
+      const value = event.target.value;
 
-    if (value === "") {
-      delete draft.quantity;
-    } else {
-      draft.quantity = Number(value);
-    }
+      if (value === "") {
+        delete draft.quantity;
+      } else {
+        draft.quantity = Number(value);
+      }
 
-    weighState.quantityAlert = null;
-  });
+      weighState.quantityAlert = null;
+    });
 }
 
 function handleScanInput(value) {
@@ -1565,21 +1560,25 @@ function initWeighingPanel() {
     closeSummaryPanel();
   });
 
-  document.getElementById("pkgSummarySaveBtn")?.addEventListener("click", () => {
-    if (!validateSummaryInspector()) return;
-    closeSummaryPanel();
-  });
+  document
+    .getElementById("pkgSummarySaveBtn")
+    ?.addEventListener("click", () => {
+      if (!validateSummaryInspector()) return;
+      closeSummaryPanel();
+    });
 
   document.getElementById("summaryPrintBtn")?.addEventListener("click", () => {
     if (!validateSummaryInspector()) return;
     showPrintPreviewPanel();
   });
 
-  document.getElementById("summaryInspector")?.addEventListener("change", () => {
-    if (document.getElementById("summaryInspector")?.value) {
-      clearSummaryInspectorError();
-    }
-  });
+  document
+    .getElementById("summaryInspector")
+    ?.addEventListener("change", () => {
+      if (document.getElementById("summaryInspector")?.value) {
+        clearSummaryInspectorError();
+      }
+    });
 
   document
     .getElementById("pkgSummaryInspector")
