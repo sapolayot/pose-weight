@@ -154,6 +154,7 @@ function openWeighPanel({
 }
 
 function closeWeighPanel() {
+  closeQrScanner();
   clearScanTimer();
   scanBuffer = "";
   document.getElementById("scanInput")?.blur();
@@ -168,6 +169,7 @@ function hideSummaryPanels() {
 }
 
 function closeSummaryPanel() {
+  closeQrScanner();
   clearScanTimer();
   scanBuffer = "";
   document.getElementById("scanInput")?.blur();
@@ -834,24 +836,42 @@ function renderScanAlert(stepId) {
   return "";
 }
 
+function renderScanBoxButton({
+  scannedCode,
+  extraClass = "",
+  waitingHint = "แตะที่กรอบเพื่อเปิดกล้องสแกน QR",
+  successHint = "สแกน QR/Barcode สำเร็จ",
+}) {
+  const hasScan = Boolean(scannedCode);
+  const boxClass = [
+    "scan-box",
+    "scan-box-btn",
+    hasScan ? "scan-box--success" : "",
+    extraClass,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return `
+    <button type="button" class="${boxClass}" aria-label="เปิดกล้องสแกน QR">
+      <i class="fa-solid fa-qrcode scan-box-icon"></i>
+      <p class="scan-status">${hasScan ? scannedCode : "รอสแกน QR"}</p>
+      <p class="scan-hint">${hasScan ? successHint : waitingHint}</p>
+    </button>
+  `;
+}
+
 function renderScanBox(stepId, scannedCode) {
   const workflow = getWorkflow(weighState.type);
   const isActive = getStepStatus(stepId) === "active";
 
   if (!isActive) return "";
 
-  const hasScan = Boolean(scannedCode);
   const canPass = canPassScanStep(stepId);
 
   return `
     <div class="weigh-step-scan">
-      <div class="scan-box ${hasScan ? "scan-box--success" : ""}">
-        <i class="fa-solid fa-qrcode scan-box-icon"></i>
-        <p class="scan-status">${hasScan ? scannedCode : "รอสแกน QR"}</p>
-        <p class="scan-hint">${
-          hasScan ? "สแกน QR/Barcode สำเร็จ" : "กดปุ่มด้านข้างเครื่องเพื่อสแกน"
-        }</p>
-      </div>
+      ${renderScanBoxButton({ scannedCode })}
       ${renderScanAlert(stepId)}
       <div class="weigh-actions weigh-actions--scan">
         ${workflow.actions
@@ -950,15 +970,12 @@ function renderScaleStep(stepId) {
 
   return `
     <div class="weigh-step-body">
-      <div class="scan-box ${scanBoxClass}">
-        <i class="fa-solid fa-qrcode scan-box-icon"></i>
-        <p class="scan-status">${hasScan ? scannedCode : "รอสแกน QR"}</p>
-        <p class="scan-hint">${
-          hasScan
-            ? "เชื่อมต่อเครื่องชั่งสำเร็จ"
-            : "กดปุ่มด้านข้างเครื่องเพื่อสแกน"
-        }</p>
-      </div>
+      ${renderScanBoxButton({
+        scannedCode,
+        extraClass: scanBoxClass,
+        waitingHint: "แตะที่กรอบเพื่อเปิดกล้องสแกน QR",
+        successHint: "เชื่อมต่อเครื่องชั่งสำเร็จ",
+      })}
       ${
         scaleAlert === "mismatch"
           ? `<div class="scan-alert scan-alert--danger"><strong>QR ไม่ตรง</strong> — สแกน QR บนเครื่องชั่งใหม่อีกครั้ง</div>`
@@ -1658,6 +1675,17 @@ function initWeighingPanel() {
   document.getElementById("weighPanel")?.addEventListener("click", (event) => {
     if (event.target.closest("button, input, select, textarea, label")) return;
     focusScanInput();
+  });
+
+  document.getElementById("weighSteps")?.addEventListener("click", (event) => {
+    const scanBtn = event.target.closest(".scan-box-btn");
+    if (!scanBtn) return;
+
+    event.stopPropagation();
+
+    if (!weighState || !getActiveScanStep()) return;
+
+    openQrScanner((value) => handleScanInput(value));
   });
 }
 

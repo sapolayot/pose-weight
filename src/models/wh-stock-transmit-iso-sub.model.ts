@@ -3,13 +3,6 @@ import type {
   WhStockTransmitIsoSubRecord,
 } from "../types/wh-stock-transmit-iso-sub.type";
 
-function formatListAmount(value: number): string {
-  return Number(value).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
 export default class WhStockTransmitIsoSub implements WhStockTransmitIsoSubRecord {
   id: string;
   rowNo: number;

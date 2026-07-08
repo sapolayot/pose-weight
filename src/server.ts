@@ -16,6 +16,7 @@ const app: Application = express();
 
 const allowedOrigins = [
   "http://localhost:3000",
+  // "https://ff24-183-88-229-99.ngrok-free.app",
   // "https://yourdomain.com"
 ];
 
