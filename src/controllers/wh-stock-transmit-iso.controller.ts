@@ -13,7 +13,11 @@ export async function searchWhStockTransmitIso(
     const limit =
       typeof req.query.limit === "string"
         ? Number.parseInt(req.query.limit, 10)
-        : 200;
+        : 10;
+    const page =
+      typeof req.query.page === "string"
+        ? Number.parseInt(req.query.page, 10)
+        : 1;
     const statusParam =
       typeof req.query.status === "string" ? req.query.status : undefined;
     let status: number | undefined;
@@ -24,15 +28,21 @@ export async function searchWhStockTransmitIso(
       status = 1;
     }
 
+    const safeLimit = Number.isFinite(limit) ? limit : 10;
+    const safePage = Number.isFinite(page) ? page : 1;
+
     const data = await service.searchProductionList({
       q,
-      limit: Number.isFinite(limit) ? limit : 200,
+      limit: safeLimit,
+      page: safePage,
       status,
     });
 
     res.json({
       success: true,
       message: "Production list loaded",
+      limit: safeLimit,
+      page: safePage,
       data,
     });
   } catch (err) {

@@ -35,5 +35,6 @@ export interface ProductionListItem {
 export interface WhStockTransmitIsoSearchQuery {
   q?: string;
   limit?: number;
+  page?: number;
   status?: number;
 }

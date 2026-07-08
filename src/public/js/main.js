@@ -631,35 +631,117 @@ function renderProductionListItem(item) {
   `;
 }
 
-function bindProductionListItems() {
-  document.querySelectorAll(".production-list .list-item").forEach((item) => {
-    item.addEventListener("click", () => openWithdrawPanel(item));
-  });
-}
+const PRODUCTION_PAGE_SIZE = 10;
+const PRODUCTION_APPEND_DELAY_MS = 500;
 
 let productionSearchTimer = null;
 let productionStatusFilter = "all";
+let productionPage = 1;
+let productionHasMore = true;
+let productionLoadingData = false;
+let productionListObserver = null;
+let productionLoadGeneration = 0;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function clearProductionListItems(listEl) {
+  listEl.querySelectorAll(".list-item").forEach((item) => item.remove());
+}
+
+function updateProductionLoadMoreVisibility() {
+  const loadMoreEl = document.getElementById("productionLoadMore");
+  if (!loadMoreEl) return;
+
+  loadMoreEl.hidden = !productionHasMore;
+}
+
+function appendProductionListItems(listEl, loadMoreEl, items) {
+  const itemsHtml = items
+    .map((item) => renderProductionListItem(item))
+    .join("");
+
+  if (loadMoreEl) {
+    loadMoreEl.insertAdjacentHTML("beforebegin", itemsHtml);
+  } else {
+    listEl.insertAdjacentHTML("beforeend", itemsHtml);
+  }
+}
+
+function initProductionListObserver() {
+  const loadMoreEl = document.getElementById("productionLoadMore");
+  if (!loadMoreEl) return;
+
+  if (productionListObserver) {
+    productionListObserver.disconnect();
+  }
+
+  productionListObserver = new IntersectionObserver(async (entries) => {
+    if (
+      entries[0]?.isIntersecting &&
+      !productionLoadingData &&
+      productionHasMore
+    ) {
+      const query =
+        document.getElementById("productionSearch")?.value.trim() || "";
+      await loadProductionList(query, productionStatusFilter, { append: true });
+    }
+  });
+
+  productionListObserver.observe(loadMoreEl);
+}
+
+function initProductionListEvents() {
+  const listEl = document.getElementById("productionList");
+  if (!listEl || listEl.dataset.bound === "true") return;
+
+  listEl.dataset.bound = "true";
+  listEl.addEventListener("click", (event) => {
+    const item = event.target.closest(".list-item");
+    if (!item) return;
+    openWithdrawPanel(item);
+  });
+}
 
 async function loadProductionList(
   query = "",
   statusFilter = productionStatusFilter,
+  { append = false } = {},
 ) {
   const listEl = document.getElementById("productionList");
   const emptyEl = document.getElementById("productionEmpty");
   const loadingEl = document.getElementById("productionLoading");
+  const loadMoreEl = document.getElementById("productionLoadMore");
 
-  if (!listEl) return;
+  if (!listEl || productionLoadingData) return;
+
+  const loadGeneration = append
+    ? productionLoadGeneration
+    : ++productionLoadGeneration;
 
   productionStatusFilter = statusFilter;
+  productionLoadingData = true;
 
-  if (loadingEl) loadingEl.hidden = false;
-  if (emptyEl) {
-    emptyEl.textContent = "ไม่พบรายการที่ค้นหา";
-    emptyEl.hidden = true;
+  if (!append) {
+    productionPage = 1;
+    productionHasMore = true;
+    clearProductionListItems(listEl);
+    if (emptyEl) {
+      emptyEl.textContent = "ไม่พบรายการที่ค้นหา";
+      emptyEl.hidden = true;
+    }
+    if (loadingEl) loadingEl.hidden = false;
+    if (loadMoreEl) loadMoreEl.hidden = true;
+  } else if (loadMoreEl) {
+    loadMoreEl.hidden = false;
   }
 
   try {
     const params = new URLSearchParams();
+    params.set("limit", String(PRODUCTION_PAGE_SIZE));
+    params.set("page", String(productionPage));
+
     if (query.trim()) {
       params.set("q", query.trim());
     }
@@ -679,25 +761,44 @@ async function loadProductionList(
     const payload = await response.json();
     const items = Array.isArray(payload.data) ? payload.data : [];
 
-    listEl.querySelectorAll(".list-item").forEach((item) => item.remove());
+    if (loadGeneration !== productionLoadGeneration) return;
 
-    if (items.length === 0) {
+    if (items.length === 0 && !append) {
       if (emptyEl) emptyEl.hidden = false;
+      productionHasMore = false;
+    } else if (items.length > 0) {
+      if (append) {
+        await sleep(PRODUCTION_APPEND_DELAY_MS);
+        if (loadGeneration !== productionLoadGeneration) return;
+      }
+
+      appendProductionListItems(listEl, loadMoreEl, items);
+      productionHasMore = items.length === PRODUCTION_PAGE_SIZE;
+      productionPage += 1;
     } else {
-      listEl.insertAdjacentHTML(
-        "beforeend",
-        items.map((item) => renderProductionListItem(item)).join(""),
-      );
-      bindProductionListItems();
+      productionHasMore = false;
+    }
+
+    updateProductionLoadMoreVisibility();
+
+    if (productionHasMore) {
+      initProductionListObserver();
+    } else if (productionListObserver) {
+      productionListObserver.disconnect();
+      productionListObserver = null;
     }
   } catch (error) {
     console.error(error);
-    if (emptyEl) {
+    if (!append && emptyEl) {
       emptyEl.textContent = "ไม่สามารถโหลดรายการผลิตได้";
       emptyEl.hidden = false;
     }
+    productionHasMore = false;
+    updateProductionLoadMoreVisibility();
   } finally {
+    productionLoadingData = false;
     if (loadingEl) loadingEl.hidden = true;
+    if (!productionHasMore && loadMoreEl) loadMoreEl.hidden = true;
   }
 }
 
@@ -711,6 +812,7 @@ function handleProductionSearchInput() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initProductionListEvents();
   loadProductionList();
 
   document

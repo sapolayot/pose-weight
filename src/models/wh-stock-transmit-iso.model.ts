@@ -1,4 +1,7 @@
-import type { ProductionListItem, WhStockTransmitIsoRecord } from "../types/wh-stock-transmit-iso.type";
+import type {
+  ProductionListItem,
+  WhStockTransmitIsoRecord,
+} from "../types/wh-stock-transmit-iso.type";
 
 function formatListAmount(value: number): string {
   return Number(value).toLocaleString("en-US", {
@@ -60,7 +63,7 @@ export default class WhStockTransmitIso implements WhStockTransmitIsoRecord {
   }
 
   get unitLabel(): string {
-    return this.unitName.trim() || this.manufacturingUnit.trim() || "—";
+    return this.unitName.trim() || "—";
   }
 
   toProductionListItem(): ProductionListItem {

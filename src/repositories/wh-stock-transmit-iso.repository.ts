@@ -5,5 +5,6 @@ export default interface WhStockTransmitIsoRepository {
     query?: string,
     limit?: number,
     status?: number,
+    page?: number,
   ): Promise<WhStockTransmitIsoRecord[]>;
 }
