@@ -942,10 +942,15 @@ function renderScaleStep(stepId) {
   const scannedCode = stepData.scanCode || null;
   const hasScan = Boolean(scannedCode);
   const scaleAlert = weighState.scaleAlert;
+  const scanBoxClass = hasScan
+    ? "scan-box--success"
+    : scaleAlert === "mismatch"
+      ? "scan-box--error"
+      : "";
 
   return `
     <div class="weigh-step-body">
-      <div class="scan-box ${hasScan ? "scan-box--success" : ""}">
+      <div class="scan-box ${scanBoxClass}">
         <i class="fa-solid fa-qrcode scan-box-icon"></i>
         <p class="scan-status">${hasScan ? scannedCode : "รอสแกน QR"}</p>
         <p class="scan-hint">${
@@ -1211,11 +1216,17 @@ function renderLockedStep(step) {
   `;
 }
 
-function getScanStepAlertClass(step) {
-  if (step.kind !== "scan" || !weighState.scanAlert) return "";
+function getStepAlertClass(step) {
+  if (step.kind === "scan" && weighState.scanAlert) {
+    if (weighState.scanAlert === "no_stock") return "weigh-step--warn";
+    return "weigh-step--alert";
+  }
 
-  if (weighState.scanAlert === "no_stock") return "weigh-step--warn";
-  return "weigh-step--alert";
+  if (step.kind === "scale" && weighState.scaleAlert === "mismatch") {
+    return "weigh-step--alert";
+  }
+
+  return "";
 }
 
 function renderActiveStep(step) {
@@ -1245,7 +1256,7 @@ function renderActiveStep(step) {
   const rowSummary = step.kind === "scan" && !scannedCode ? "" : summary;
 
   return `
-    <div class="weigh-step weigh-step--active ${step.kind === "quantity" ? "weigh-step--quantity" : ""} ${getScanStepAlertClass(step)}">
+    <div class="weigh-step weigh-step--active ${step.kind === "quantity" ? "weigh-step--quantity" : ""} ${getStepAlertClass(step)}">
       ${renderStepRow(step, { variant: "active", summary: rowSummary })}
       ${step.kind !== "quantity" && desc ? `<p class="weigh-step-desc weigh-step-desc--highlight">${desc}</p>` : ""}
       ${body}
@@ -1283,6 +1294,12 @@ function bindWeighStepEvents() {
   document.querySelectorAll(".weigh-action-btn").forEach((btn) => {
     btn.addEventListener("click", (event) => {
       event.stopPropagation();
+
+      if (btn.dataset.stepAction === "scale_mismatch") {
+        weighState.scaleAlert = "mismatch";
+        renderWeighSteps();
+        return;
+      }
 
       const stepId = Number(btn.dataset.step);
       const actionId = btn.dataset.action;

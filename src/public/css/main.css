@@ -809,7 +809,6 @@ button.weigh-step-status--edit {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid #edf2f7;
-  padding-left: 44px;
 }
 
 .weigh-step-desc {
@@ -844,6 +843,11 @@ button.weigh-step-status--edit {
   background-color: #f0fdf4;
 }
 
+.scan-box--error {
+  border-color: #fca5a5;
+  background-color: #fef2f2;
+}
+
 .scan-box-icon {
   font-size: 36px;
   color: #5195cb;
@@ -852,6 +856,10 @@ button.weigh-step-status--edit {
 
 .scan-box--success .scan-box-icon {
   color: #22c55e;
+}
+
+.scan-box--error .scan-box-icon {
+  color: #f87171;
 }
 
 .scan-status {
@@ -864,6 +872,10 @@ button.weigh-step-status--edit {
 
 .scan-box--success .scan-status {
   color: #16a34a;
+}
+
+.scan-box--error .scan-status {
+  color: #dc2626;
 }
 
 .scan-hint {
@@ -880,6 +892,7 @@ button.weigh-step-status--edit {
 }
 
 .scan-alert--danger {
+  margin-top: 12px;
   background-color: #fef2f2;
   border: 1px solid #fecaca;
   color: #dc2626;
@@ -962,9 +975,9 @@ button.weigh-step-status--edit {
 }
 
 .weigh-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .weigh-actions--scan {
@@ -1211,7 +1224,7 @@ button.weigh-step-status--edit {
 }
 
 .weigh-actions--scale {
-  margin-top: 0;
+  margin-top: 12px;
 }
 
 .weigh-action-btn--scale {
@@ -1401,7 +1414,9 @@ button.weigh-step-status--edit {
   transform: translateX(100%);
   visibility: hidden;
   pointer-events: none;
-  transition: transform 0.3s ease, visibility 0s linear 0.3s;
+  transition:
+    transform 0.3s ease,
+    visibility 0s linear 0.3s;
   overflow: hidden;
 }
 
@@ -1410,7 +1425,9 @@ button.weigh-step-status--edit {
   transform: translateX(0);
   visibility: visible;
   pointer-events: auto;
-  transition: transform 0.3s ease, visibility 0s linear 0s;
+  transition:
+    transform 0.3s ease,
+    visibility 0s linear 0s;
 }
 
 .summary-header-body {
