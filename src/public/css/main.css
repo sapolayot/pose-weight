@@ -956,6 +956,11 @@ button.weigh-step-status--edit {
   color: #ffffff;
 }
 
+.stock-continue-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .weigh-actions {
   display: flex;
   flex-wrap: wrap;

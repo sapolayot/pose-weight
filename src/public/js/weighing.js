@@ -788,9 +788,10 @@ function renderScanAlert(stepId) {
   }
 
   if (alert === "no_stock") {
-    const lot = weighState.completedSteps[stepId]?.scanCode || "L26070609";
+    const lot = weighState.completedSteps[stepId]?.scanCode?.trim() || "—";
     const required = formatWeighAmount(weighState.amount);
     const remaining = formatWeighAmount(getMockStockRemaining());
+    const canContinue = canPassScanStep(stepId);
 
     return `
       <div class="scan-alert scan-alert--stock">
@@ -817,7 +818,12 @@ function renderScanAlert(stepId) {
           <button type="button" class="stock-cancel-btn" data-step="${stepId}">
             ยกเลิก
           </button>
-          <button type="button" class="stock-continue-btn" data-step="${stepId}">
+          <button
+            type="button"
+            class="stock-continue-btn"
+            data-step="${stepId}"
+            ${canContinue ? "" : "disabled"}
+          >
             ดำเนินการต่อ
           </button>
         </div>
@@ -1314,8 +1320,18 @@ function bindWeighStepEvents() {
 
   document.querySelectorAll(".stock-continue-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      weighState.stockAcknowledged = true;
-      renderWeighSteps();
+      if (btn.disabled) return;
+
+      const stepId = Number(btn.dataset.step);
+      if (!canPassScanStep(stepId)) return;
+
+      const scanCode = weighState.completedSteps[stepId]?.scanCode?.trim();
+
+      completeStep(stepId, {
+        scanCode: scanCode || null,
+        actionLabel: "ดำเนินการต่อ",
+        alertType: "no_stock",
+      });
     });
   });
 
