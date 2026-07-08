@@ -49,7 +49,7 @@ export default class WhInventorySqlRepository implements WhInventoryRepository {
         ORDER BY wh_inventory.Inv_Code DESC 
         LIMIT 1
    `;
-    const [rows] = await pool.query<WhInventoryRow[]>(sql, { code, itemCode });
+    const [rows] = await pool.query<WhInventoryRow[]>(sql, [itemCode, code]);
     return rows.map((row) => ({
       invCode: row.invCode,
       itemCode: row.itemCode,

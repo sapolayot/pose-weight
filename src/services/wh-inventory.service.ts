@@ -1,6 +1,6 @@
-import WhStockTransmitSubIso from "../models/wh-stock-transmit-iso-sub.model";
+import WhInventory from "../models/wh-inventory.model";
 import WhInventorySqlRepository from "../repositories/sql/wh-inventory.repository-sql";
-import { ProductionListItem } from "../types/wh-stock-transmit-iso-sub.type";
+import type { WhInventoryDto } from "../types/wh-inventory.type";
 
 export default class WhInventoryService {
   private repo = new WhInventorySqlRepository();
@@ -8,11 +8,9 @@ export default class WhInventoryService {
   async getInventoryByCodeAndItemCode(
     invCode: string,
     itemCode: string,
-  ): Promise<ProductionListItem[]> {
+  ): Promise<WhInventoryDto[]> {
     const rows = await this.repo.getByInvCodeAndItemCode(invCode, itemCode);
 
-    return rows.map((row) =>
-      new WhStockTransmitSubIso(row).toProductionListItem(),
-    );
+    return rows.map((row) => new WhInventory(row).toListDto());
   }
 }

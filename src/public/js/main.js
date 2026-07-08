@@ -114,6 +114,7 @@ function renderRoundItems(item, type, { showPending = true } = {}) {
             data-type="${type}"
             data-item-name="${item.name}"
             data-item-code="${item.code || ""}"
+            data-material-item-code="${round.itemCode || item.itemCode || ""}"
             data-round="${round.round}"
             data-round-needed="${round.needed}"
             data-item-unit="${round.unit}"
@@ -203,6 +204,7 @@ function renderPendingCard(item, type) {
       data-type="${type}"
       data-item-name="${item.name}"
       data-item-code="${item.code || ""}"
+      data-material-item-code="${item.itemCode || ""}"
       data-item-total="${item.total}"
       data-item-withdrawn="${item.withdrawn || 0}"
       data-item-unit="${item.unit}"
@@ -304,6 +306,7 @@ function mapRowToRound(row, roundNumber, unit, fallbackTotal) {
       round: roundNumber,
       lot: row.lotNo || "",
       code: row.refCode || row.itemCode || "",
+      itemCode: row.itemCode || "",
       amount: getRowAmount(row),
       unit,
       status: "done",
@@ -313,6 +316,7 @@ function mapRowToRound(row, roundNumber, unit, fallbackTotal) {
   return {
     round: roundNumber,
     needed: getRowNeeded(row, fallbackTotal),
+    itemCode: row.itemCode || "",
     unit,
     status: "pending",
   };
@@ -328,6 +332,7 @@ function buildRoundsFromRows(rows, total, unit, withdrawn) {
     round: index + 1,
     lot: row.lotNo || "",
     code: row.refCode || row.itemCode || "",
+    itemCode: row.itemCode || "",
     amount: getRowAmount(row),
     unit,
     status: "done",
@@ -339,6 +344,7 @@ function buildRoundsFromRows(rows, total, unit, withdrawn) {
         round: 1,
         lot: sorted[0]?.lotNo || "",
         code: sorted[0]?.refCode || sorted[0]?.itemCode || "",
+        itemCode: sorted[0]?.itemCode || "",
         amount: withdrawn,
         unit,
         status: "done",
@@ -378,6 +384,7 @@ function buildMaterialItem(rows) {
     return {
       name,
       code,
+      itemCode: first.itemCode || "",
       withdrawn,
       total: effectiveTotal,
       unit,
@@ -392,6 +399,7 @@ function buildMaterialItem(rows) {
     return {
       name,
       code,
+      itemCode: first.itemCode || "",
       lot: first.lotNo || first.refCode || "",
       withdrawn: effectiveTotal,
       total: effectiveTotal,
@@ -406,6 +414,7 @@ function buildMaterialItem(rows) {
     return {
       name,
       code,
+      itemCode: first.itemCode || "",
       withdrawn,
       total: effectiveTotal,
       unit,
@@ -417,6 +426,7 @@ function buildMaterialItem(rows) {
   return {
     name,
     code,
+    itemCode: first.itemCode || "",
     withdrawn: 0,
     total: effectiveTotal,
     unit,
@@ -833,7 +843,10 @@ document.addEventListener("DOMContentLoaded", () => {
           openWeighPanel({
             type: weighBtn.dataset.type,
             name: weighBtn.dataset.itemName,
-            itemCode: weighBtn.dataset.itemCode || "",
+            itemCode:
+              weighBtn.dataset.materialItemCode ||
+              weighBtn.dataset.itemCode ||
+              "",
             amount: Number(weighBtn.dataset.roundNeeded),
             unit: weighBtn.dataset.itemUnit,
             round: Number(weighBtn.dataset.round),
@@ -862,7 +875,8 @@ document.addEventListener("DOMContentLoaded", () => {
         openWeighPanel({
           type: card.dataset.type,
           name: card.dataset.itemName,
-          itemCode: card.dataset.itemCode || "",
+          itemCode:
+            card.dataset.materialItemCode || card.dataset.itemCode || "",
           amount: total - withdrawn,
           unit: card.dataset.itemUnit,
           ...getWithdrawProductContext(),

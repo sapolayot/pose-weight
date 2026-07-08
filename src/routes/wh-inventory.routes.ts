@@ -5,7 +5,7 @@ import { authMiddleware } from "../middlewares/auth.middleware";
 const router = Router();
 
 router.get(
-  "/wh-stock-transmit-iso-sub/qrcode",
+  "/wh-inventory/qrcode",
   authMiddleware,
   getInventoryByCodeAndItemCode,
 );

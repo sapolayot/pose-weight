@@ -1,3 +1,141 @@
+function isFirstMaterialScanStep(step) {
+  return (
+    (weighState?.type === "R" || weighState?.type === "P") &&
+    step?.kind === "scan" &&
+    Number(step.id) === 1
+  );
+}
+
+function isApiValidatedScanStep(stepId) {
+  return (
+    (weighState?.type === "R" || weighState?.type === "P") && stepId === 1
+  );
+}
+
+function isInventoryExpired(inventory) {
+  if (Number(inventory?.dayDiff) < 0) return true;
+
+  const expDate = inventory?.expDate;
+  if (!expDate) return false;
+
+  const parts = expDate.split("-").map(Number);
+  if (parts.length !== 3) return false;
+
+  const [day, month, year] = parts;
+  const exp = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return exp < today;
+}
+
+function getStockRemainingQty() {
+  if (weighState?.scanInventory?.qty != null) {
+    return Number(weighState.scanInventory.qty) || 0;
+  }
+
+  return getMockStockRemaining();
+}
+
+function getScanDisplayCode(stepId, scannedCode) {
+  if (weighState?.scanInventory?.lotNo) return weighState.scanInventory.lotNo;
+  if (weighState?.scanInventory?.invCode)
+    return weighState.scanInventory.invCode;
+  return scannedCode;
+}
+
+function getScanHighlightAction(stepId) {
+  if (!isApiValidatedScanStep(stepId) || !weighState.scanValidated) {
+    return null;
+  }
+
+  return weighState.scanAlert || "pass";
+}
+
+function isScanActionDisabled(action, stepId) {
+  if (isApiValidatedScanStep(stepId)) {
+    if (!weighState.scanValidated || weighState.scanLoading) return true;
+    if (action.id === "pass") return !canPassScanStep(stepId);
+    return true;
+  }
+
+  const isPass = action.id === "pass";
+  return isPass ? !canPassScanStep(stepId) : false;
+}
+
+async function fetchInventoryByQrCode(invCode, itemCode) {
+  const params = new URLSearchParams({
+    invCode,
+    itemCode: itemCode || "",
+  });
+
+  const response = await fetch(
+    `${API_URL}/wh-inventory/qrcode?${params.toString()}`,
+    { credentials: "include" },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to validate QR code");
+  }
+
+  return response.json();
+}
+
+function resolveMaterialScanAlert(inventory) {
+  if (isInventoryExpired(inventory)) return "expired";
+
+  const qty = Number(inventory.qty) || 0;
+  const required = Number(weighState.amount) || 0;
+
+  if (qty < required) return "no_stock";
+
+  return null;
+}
+
+async function handleMaterialQrScan(invCode) {
+  const stepId = 1;
+
+  weighState.scanAlert = null;
+  weighState.scanValidated = false;
+  weighState.scanInventory = null;
+  weighState.scanLoading = true;
+  weighState.completedSteps[stepId] = {
+    ...(weighState.completedSteps[stepId] || {}),
+    scanCode: invCode,
+    locked: false,
+  };
+
+  renderWeighSteps();
+
+  try {
+    const payload = await fetchInventoryByQrCode(invCode, weighState.itemCode);
+    const inventory = Array.isArray(payload.data) ? payload.data[0] : null;
+
+    if (!payload.success || !inventory) {
+      weighState.scanAlert = "mismatch";
+      weighState.scanValidated = true;
+      return;
+    }
+
+    weighState.scanInventory = inventory;
+    weighState.scanAlert = resolveMaterialScanAlert(inventory);
+    weighState.scanValidated = true;
+
+    if (!weighState.scanAlert) {
+      weighState.completedSteps[stepId].scanCode =
+        inventory.lotNo || inventory.invCode || invCode;
+    }
+  } catch (error) {
+    console.error(error);
+    weighState.scanAlert = "mismatch";
+    weighState.scanValidated = true;
+  } finally {
+    weighState.scanLoading = false;
+    renderWeighSteps();
+    focusScanInput();
+  }
+}
+
 const WEIGH_WORKFLOWS = {
   R: {
     label: "ชั่งน้ำหนักเคมี",
@@ -58,6 +196,7 @@ const WEIGH_WORKFLOWS = {
       { id: "pass", label: "ผ่าน", tone: "neutral", advance: true },
       { id: "no_stock", label: "สต็อกไม่พอ", tone: "warning", advance: false },
       { id: "mismatch", label: "ไม่ตรง", tone: "danger", advance: false },
+      { id: "expired", label: "หมดอายุ", tone: "danger", advance: false },
     ],
   },
 };
@@ -133,6 +272,9 @@ function openWeighPanel({
     stepAlert: null,
     quantityAlert: null,
     stockAcknowledged: false,
+    scanValidated: false,
+    scanInventory: null,
+    scanLoading: false,
   };
 
   scanBuffer = "";
@@ -431,6 +573,9 @@ function reopenStep(stepId) {
   weighState.stepAlert = null;
   weighState.quantityAlert = null;
   weighState.stockAcknowledged = false;
+  weighState.scanValidated = false;
+  weighState.scanInventory = null;
+  weighState.scanLoading = false;
 
   renderWeighSteps();
   focusScanInput();
@@ -636,6 +781,8 @@ function getSummaryWeights() {
 }
 
 function getMaterialLot() {
+  if (weighState.scanInventory?.lotNo) return weighState.scanInventory.lotNo;
+
   const scanStep = weighState.completedSteps[1];
   return scanStep?.scanCode || "L26070608";
 }
@@ -760,7 +907,17 @@ function showSummaryPanel() {
 
 function canPassScanStep(stepId) {
   const stepData = weighState.completedSteps[stepId] || {};
-  return Boolean(stepData.scanCode?.trim());
+  if (!stepData.scanCode?.trim()) return false;
+
+  if (isApiValidatedScanStep(stepId)) {
+    return (
+      weighState.scanValidated &&
+      !weighState.scanLoading &&
+      weighState.scanAlert === null
+    );
+  }
+
+  return true;
 }
 
 function renderScanAlert(stepId) {
@@ -790,10 +947,16 @@ function renderScanAlert(stepId) {
   }
 
   if (alert === "no_stock") {
-    const lot = weighState.completedSteps[stepId]?.scanCode?.trim() || "—";
+    const lot =
+      weighState.scanInventory?.lotNo ||
+      weighState.completedSteps[stepId]?.scanCode?.trim() ||
+      "—";
     const required = formatWeighAmount(weighState.amount);
-    const remaining = formatWeighAmount(getMockStockRemaining());
-    const canContinue = canPassScanStep(stepId);
+    const remaining = formatWeighAmount(getStockRemainingQty());
+    const stockUnit = weighState.unit;
+    const canContinue =
+      canPassScanStep(stepId) ||
+      Boolean(weighState.completedSteps[stepId]?.scanCode?.trim());
 
     return `
       <div class="scan-alert scan-alert--stock">
@@ -807,11 +970,11 @@ function renderScanAlert(stepId) {
         </div>
         <div class="scan-alert-stock-row">
           <span>ยอดที่ต้องการ</span>
-          <strong>${required} ${weighState.unit}</strong>
+          <strong>${required} ${stockUnit}</strong>
         </div>
         <div class="scan-alert-stock-row">
           <span>สต็อกคงเหลือ</span>
-          <strong class="scan-alert-stock-low">${remaining} ${weighState.unit}</strong>
+          <strong class="scan-alert-stock-low">${remaining} ${stockUnit}</strong>
         </div>
         <p class="scan-alert-stock-question">
           ต้องการดำเนินการต่อด้วยสต็อกที่มีอยู่?
@@ -841,22 +1004,30 @@ function renderScanBoxButton({
   extraClass = "",
   waitingHint = "แตะที่กรอบเพื่อเปิดกล้องสแกน QR",
   successHint = "สแกน QR/Barcode สำเร็จ",
+  loading = false,
 }) {
   const hasScan = Boolean(scannedCode);
   const boxClass = [
     "scan-box",
     "scan-box-btn",
     hasScan ? "scan-box--success" : "",
+    loading ? "scan-box--loading" : "",
     extraClass,
   ]
     .filter(Boolean)
     .join(" ");
 
+  const hint = loading
+    ? "กำลังตรวจสอบ QR..."
+    : hasScan
+      ? successHint
+      : waitingHint;
+
   return `
-    <button type="button" class="${boxClass}" aria-label="เปิดกล้องสแกน QR">
+    <button type="button" class="${boxClass}" aria-label="เปิดกล้องสแกน QR" ${loading ? "disabled" : ""}>
       <i class="fa-solid fa-qrcode scan-box-icon"></i>
       <p class="scan-status">${hasScan ? scannedCode : "รอสแกน QR"}</p>
-      <p class="scan-hint">${hasScan ? successHint : waitingHint}</p>
+      <p class="scan-hint">${hint}</p>
     </button>
   `;
 }
@@ -867,22 +1038,30 @@ function renderScanBox(stepId, scannedCode) {
 
   if (!isActive) return "";
 
-  const canPass = canPassScanStep(stepId);
+  const displayCode = getScanDisplayCode(stepId, scannedCode);
+  const highlightAction = getScanHighlightAction(stepId);
 
   return `
     <div class="weigh-step-scan">
-      ${renderScanBoxButton({ scannedCode })}
+      ${renderScanBoxButton({
+        scannedCode: displayCode,
+        loading: weighState.scanLoading,
+        successHint:
+          weighState.scanAlert === null && weighState.scanValidated
+            ? "ตรวจสอบ QR ผ่าน"
+            : "สแกน QR/Barcode สำเร็จ",
+      })}
       ${renderScanAlert(stepId)}
       <div class="weigh-actions weigh-actions--scan">
         ${workflow.actions
           .map((action) => {
-            const isPass = action.id === "pass";
-            const disabled = isPass ? !canPass : false;
+            const disabled = isScanActionDisabled(action, stepId);
+            const highlight = highlightAction === action.id;
 
             return `
               <button
                 type="button"
-                class="weigh-action-btn weigh-action-btn--${action.tone}"
+                class="weigh-action-btn weigh-action-btn--${action.tone}${highlight ? " weigh-action-btn--highlight" : ""}"
                 data-action="${action.id}"
                 data-step="${stepId}"
                 ${disabled ? "disabled" : ""}
@@ -1338,12 +1517,15 @@ function bindWeighStepEvents() {
       }
 
       if (actionId === "no_stock") {
+        if (isApiValidatedScanStep(stepId)) return;
         weighState.scanAlert = "no_stock";
         weighState.stockAcknowledged = false;
       } else if (actionId === "mismatch") {
+        if (isApiValidatedScanStep(stepId)) return;
         weighState.scanAlert = "mismatch";
         weighState.stockAcknowledged = false;
       } else if (actionId === "expired") {
+        if (isApiValidatedScanStep(stepId)) return;
         weighState.scanAlert = "expired";
         weighState.stockAcknowledged = false;
       }
@@ -1373,6 +1555,10 @@ function bindWeighStepEvents() {
     btn.addEventListener("click", () => {
       weighState.scanAlert = null;
       weighState.stockAcknowledged = false;
+      if (weighState.type === "R" || weighState.type === "P") {
+        weighState.scanValidated = false;
+        weighState.scanInventory = null;
+      }
       renderWeighSteps();
     });
   });
@@ -1576,9 +1762,17 @@ function handleScanInput(value) {
   const scanStep = getActiveScanStep();
   if (!scanStep) return;
 
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return;
+
+  if (isFirstMaterialScanStep(scanStep)) {
+    handleMaterialQrScan(trimmedValue);
+    return;
+  }
+
   weighState.completedSteps[scanStep.id] = {
     ...(weighState.completedSteps[scanStep.id] || {}),
-    scanCode: value.trim(),
+    scanCode: trimmedValue,
     locked: false,
   };
 
@@ -1683,7 +1877,7 @@ function initWeighingPanel() {
 
     event.stopPropagation();
 
-    if (!weighState || !getActiveScanStep()) return;
+    if (!weighState || !getActiveScanStep() || weighState.scanLoading) return;
 
     openQrScanner((value) => handleScanInput(value));
   });

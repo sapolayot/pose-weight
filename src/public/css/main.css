@@ -1056,6 +1056,32 @@ button.weigh-step-status--edit {
   cursor: not-allowed;
 }
 
+.weigh-action-btn--highlight.weigh-action-btn--neutral {
+  border-color: #5195cb;
+  background-color: #edf4f9;
+  color: #1d4ed8;
+  box-shadow: inset 0 0 0 1px #5195cb;
+}
+
+.weigh-action-btn--highlight.weigh-action-btn--warning {
+  border-color: #f97316;
+  background-color: #fff7ed;
+  color: #c2410c;
+  box-shadow: inset 0 0 0 1px #f97316;
+}
+
+.weigh-action-btn--highlight.weigh-action-btn--danger {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+  color: #b91c1c;
+  box-shadow: inset 0 0 0 1px #ef4444;
+}
+
+.scan-box--loading {
+  opacity: 0.75;
+  cursor: wait;
+}
+
 .weigh-action-btn--warning {
   background-color: #fff7ed;
   border-color: #fdba74;
