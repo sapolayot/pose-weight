@@ -52,7 +52,7 @@ export default class WhStockTransmitIsoSqlRepository implements WhStockTransmitI
       FROM wh_stock_transmit_iso
       LEFT JOIN item_unit
         ON item_unit.Unit_Code = wh_stock_transmit_iso.Manufacturing_Unit
-
+      WHERE 1 = 1
     `;
 
     if (status === 0 || status === 1) {

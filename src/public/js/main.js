@@ -632,7 +632,7 @@ function renderProductionListItem(item) {
 }
 
 const PRODUCTION_PAGE_SIZE = 10;
-const PRODUCTION_APPEND_DELAY_MS = 500;
+const PRODUCTION_APPEND_DELAY_MS = 100;
 
 let productionSearchTimer = null;
 let productionStatusFilter = "all";
