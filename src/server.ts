@@ -10,13 +10,16 @@ import { testConnection } from "./config/database.config";
 
 dotenv.config();
 
+const HOST = process.env.HOST || "localhost";
+
 const PORT = process.env.PORT || 3000;
 
 const app: Application = express();
 
 const allowedOrigins = [
   "http://localhost:3000",
-  // "https://ff24-183-88-229-99.ngrok-free.app",
+  // "https://2532-183-88-229-99.ngrok-free.app",
+  "http://10.11.9.52",
   // "https://yourdomain.com"
 ];
 
@@ -113,7 +116,7 @@ async function startServer() {
   await testConnection();
   app.listen(PORT, () => {
     console.log("=================================");
-    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`Server running at ${HOST}:${PORT}`);
     console.log("=================================");
   });
 }

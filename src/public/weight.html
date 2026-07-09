@@ -1,0 +1,1333 @@
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="assets/plugins/bootstrap@5.3.0/css/bootstrap.min.css"
+/>
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="assets/plugins/sweetalert/sweetalert.css"
+/>
+<link
+  type="text/css"
+  rel="stylesheet"
+  href="assets/plugins/analog-digital-gauge/css/jquery.simplegauge.css"
+/>
+<link type="text/css" rel="stylesheet" href="assets/css/main.css" />
+<link type="text/css" rel="stylesheet" href="assets/css/switch.css" />
+<style>
+  @import url(assets/css/icons/font-awesome/css/fontawesome-all.css);
+  @import url(assets/css/icons/simple-line-icons/css/simple-line-icons.css);
+  @import url(assets/css/icons/weather-icons/css/weather-icons.min.css);
+  @import url(assets/css/icons/linea-icons/linea.css);
+  @import url(assets/css/icons/themify-icons/themify-icons.css);
+  @import url(assets/css/icons/flag-icon-css/flag-icon.min.css);
+  @font-face {
+    font-family: "DSEG7Classic";
+    src:
+      url("assets/plugins/fonts/dseg@0.46.0/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff2")
+        format("woff2"),
+      url("assets/plugins/fonts/dseg@0.46.0/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff")
+        format("woff");
+    font-weight: bold;
+    font-style: normal;
+  }
+</style>
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>POSE — Weight Display</title>
+
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        overflow-x: hidden;
+        max-width: 100%;
+      }
+      @font-face {
+        font-family: "DSEG7Classic";
+        src:
+          url("assets/plugins/fonts/dseg@0.46.0/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff2")
+            format("woff2"),
+          url("assets/plugins/fonts/dseg@0.46.0/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff")
+            format("woff");
+        font-weight: bold;
+        font-style: normal;
+      }
+
+      body {
+        display: block;
+        overflow-x: hidden;
+        width: 100%;
+        background: #000000;
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 20px;
+        margin: 0;
+      }
+
+      .xTop {
+        max-width: 1920px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .meter-card {
+        background: transparent;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 40px;
+        backdrop-filter: none;
+        animation: fadeInUp 0.6s ease-out;
+        width: 100%;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .meter-subtitle {
+        font-size: 28px;
+        color: #718096;
+        font-weight: 400;
+      }
+
+      .meter-header {
+        position: fixed;
+        top: 168px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        text-align: center;
+      }
+
+      .meter-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: white;
+        margin: 0;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        white-space: nowrap;
+      }
+
+      .meter-header .meter-subtitle {
+        color: rgba(255, 255, 255, 0.75);
+        margin: 2px 0 0;
+        font-size: 20px;
+      }
+
+      .weight-meter-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        padding: 40px 30px;
+        background: linear-gradient(135deg, #1a1a2e 0%, #0d0d1a 100%);
+        border-radius: 15px;
+        margin: 20px 0;
+        width: 100%;
+        box-sizing: border-box;
+        box-shadow:
+          inset 0 2px 20px rgba(0, 0, 0, 0.5),
+          0 0 30px rgba(102, 126, 234, 0.2);
+      }
+
+      .side-card {
+        min-width: 200px;
+        flex-shrink: 0;
+        text-align: center;
+      }
+
+      .digital-display {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 20px 40px;
+        box-shadow: none;
+        text-align: center;
+        min-width: 500px;
+        position: relative;
+      }
+
+      .digital-label {
+        font-size: 16px;
+        color: #445544;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        font-family: "Courier New", monospace;
+        margin-bottom: 15px;
+      }
+
+      .digital-weight {
+        font-family: "DSEG7Classic", "Courier New", monospace;
+        font-size: clamp(72px, 22vw, 400px);
+        font-weight: bold;
+        line-height: 1;
+        letter-spacing: 4px;
+        color: #fafcfb;
+        text-shadow:
+          0 0 10px rgb(254, 254, 254),
+          0 0 25px rgba(206, 208, 207, 0.7),
+          0 0 50px rgba(133, 134, 134, 0.4);
+        transition:
+          color 0.4s ease,
+          text-shadow 0.4s ease;
+        display: inline-block;
+        position: relative;
+        max-width: 100vw;
+        word-break: break-word;
+      }
+
+      /* segment "off" layer เลียนแบบ 7-segment จริง */
+      .digital-weight::before {
+        content: attr(data-ghost);
+        position: absolute;
+        top: 0;
+        left: 0;
+        color: rgba(254, 255, 254, 0.08);
+        text-shadow: none;
+        pointer-events: none;
+      }
+
+      .digital-weight.weight-green {
+        color: #9be0be;
+        text-shadow:
+          0 0 10px rgb(0, 255, 100, 1),
+          0 0 25px rgba(0, 255, 100, 0.7),
+          0 0 50px rgba(0, 255, 100, 0.4);
+      }
+
+      .digital-weight.weight-green::before {
+        color: rgba(0, 255, 100, 0.08);
+      }
+
+      .digital-weight.weight-while {
+        color: #fcfcfa;
+        text-shadow:
+          0 0 10px rgb(253, 253, 252),
+          0 0 25px rgba(237, 236, 231, 0.7),
+          0 0 50px rgba(186, 186, 185, 0.4);
+      }
+
+      .digital-weight.weight-while::before {
+        color: rgba(72, 72, 71, 0.08);
+      }
+
+      .digital-weight.weight-yellow {
+        color: #ffe066;
+        text-shadow:
+          0 0 10px rgba(255, 220, 0, 1),
+          0 0 25px rgba(255, 220, 0, 0.7),
+          0 0 50px rgba(255, 220, 0, 0.4);
+      }
+
+      .digital-weight.weight-yellow::before {
+        color: rgba(255, 220, 0, 0.08);
+      }
+
+      .digital-weight.weight-red {
+        color: #ff4444;
+        text-shadow:
+          0 0 10px rgba(255, 50, 50, 1),
+          0 0 25px rgba(255, 50, 50, 0.7),
+          0 0 50px rgba(255, 50, 50, 0.4);
+      }
+
+      .digital-weight.weight-red::before {
+        color: rgba(255, 50, 50, 0.08);
+      }
+
+      .digital-weight.weight-white {
+        color: #ffffff;
+        text-shadow:
+          0 0 10px rgba(255, 255, 255, 1),
+          0 0 25px rgba(255, 255, 255, 0.7),
+          0 0 50px rgba(255, 255, 255, 0.4);
+      }
+
+      .digital-weight.weight-white::before {
+        color: rgba(255, 50, 50, 0.08);
+      }
+
+      .digital-unit {
+        font-family: "DSEG7Classic", "Courier New", monospace;
+        font-size: 42px;
+        font-weight: bold;
+        color: #fafbfa;
+        letter-spacing: 4px;
+        margin-top: 8px;
+        text-shadow: 0 0 10px rgba(243, 245, 244, 0.6);
+        transition:
+          color 0.4s ease,
+          text-shadow 0.4s ease;
+      }
+
+      .digital-unit.weight-yellow {
+        color: #ccaa00;
+        text-shadow: 0 0 10px rgba(204, 170, 0, 0.6);
+      }
+
+      .digital-unit.weight-red {
+        color: #cc2222;
+        text-shadow: 0 0 10px rgba(204, 34, 34, 0.6);
+      }
+
+      .weight-info-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+      }
+
+      .info-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 25px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        animation: slideIn 0.8s ease-out;
+      }
+
+      .info-card-red {
+        background: linear-gradient(135deg, #ea6666 0%, #ab0101 100%);
+        border-radius: 15px;
+        padding: 25px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        animation: slideIn 0.8s ease-out;
+      }
+
+      .info-card-yellow {
+        background: linear-gradient(135deg, #e1ea66 0%, #b9a101 100%);
+        border-radius: 15px;
+        padding: 25px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        animation: slideIn 0.8s ease-out;
+      }
+
+      .info-card-green {
+        background: linear-gradient(135deg, #73ea66 0%, #00790c 100%);
+        border-radius: 15px;
+        padding: 25px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        animation: slideIn 0.8s ease-out;
+      }
+
+      .info-card:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+      }
+
+      .info-label {
+        font-size: 14px;
+        font-weight: 500;
+        opacity: 0.9;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .info-value {
+        font-size: 36px;
+        font-weight: 700;
+        margin: 10px 0;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      .info-unit {
+        font-size: 18px;
+        opacity: 0.8;
+        font-weight: 400;
+      }
+
+      .status-indicator {
+        /* display: inline-block; */
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #48bb78;
+        /* margin-right: 8px; */
+        /* animation: pulse 2s infinite; */
+      }
+
+      .status-unindicator {
+        /* display: inline-block; */
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #424242;
+        /* margin-right: 8px; */
+        /* animation: pulse 2s infinite; */
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+
+        50% {
+          opacity: 0.7;
+          transform: scale(1.1);
+        }
+      }
+
+      .status-text {
+        font-size: 14px;
+        color: #48bb78;
+        font-weight: 500;
+        margin-top: 15px;
+      }
+
+      .meter-top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 20px;
+        padding-top: max(10px, env(safe-area-inset-top));
+      }
+
+      .meter-datetime {
+        position: static;
+        width: 100%;
+      }
+
+      .meter-datetime h2 {
+        margin: 0;
+        padding: 12px 20px;
+        font-family:
+          "Segoe UI", "Google Sans", Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: 1.2px;
+        color: #667eea;
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 14px;
+        box-shadow:
+          0 10px 35px rgba(102, 126, 234, 0.25),
+          0 0 25px rgba(102, 126, 234, 0.15),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        text-shadow: 0 1px 2px rgba(102, 126, 234, 0.1);
+        backdrop-filter: blur(15px);
+        border: 2px solid rgba(102, 126, 234, 0.3);
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        text-align: center;
+        width: 100%;
+        min-width: 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .meter-datetime h2::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(102, 126, 234, 0.08) 0%,
+          transparent 70%
+        );
+        animation: glow 3s ease-in-out infinite;
+      }
+
+      @keyframes glow {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+
+        50% {
+          transform: translate(10px, 10px);
+        }
+      }
+
+      .meter-datetime h2::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(102, 126, 234, 0.2),
+          transparent
+        );
+        transition: left 0.7s ease;
+      }
+
+      .meter-datetime h2:hover {
+        color: #764ba2;
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow:
+          0 18px 50px rgba(102, 126, 234, 0.35),
+          0 0 40px rgba(102, 126, 234, 0.25),
+          inset 0 0 20px rgba(102, 126, 234, 0.08),
+          inset 0 -2px 10px rgba(102, 126, 234, 0.05);
+        border: 2px solid rgba(102, 126, 234, 0.5);
+        transform: translateY(-6px) scale(1.03);
+      }
+
+      .meter-datetime h2:hover::after {
+        left: 100%;
+      }
+
+      .meter-mcid-panel {
+        position: static;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: min(340px, 100%);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      .meter-mcid {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
+        padding: 12px 22px;
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 14px;
+        border: 2px solid rgba(102, 126, 234, 0.3);
+        box-shadow: 0 10px 35px rgba(102, 126, 234, 0.25);
+        backdrop-filter: blur(15px);
+      }
+
+      .meter-mcid-select {
+        width: 100%;
+      }
+
+      .mcid-label {
+        margin-left: 20px;
+        font-size: 22px;
+        font-weight: 500;
+        color: #718096;
+        letter-spacing: 0.5px;
+      }
+
+      .mcid-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #667eea;
+      }
+
+      .mcid-sep {
+        color: #cbd5e0;
+        font-size: 18px;
+      }
+
+      .mcid-status {
+        font-size: 22px;
+        font-weight: 500;
+        color: #48bb78;
+      }
+
+      .machine-select {
+        width: 100%;
+        margin-left: 0;
+        padding: 6px 14px;
+        font-size: 20px;
+        font-weight: 600;
+        color: #667eea;
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid rgba(102, 126, 234, 0.35);
+        border-radius: 10px;
+        cursor: pointer;
+      }
+
+      .machine-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+      }
+
+      .meter-actions {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+        max-width: 520px;
+        margin: 0 auto;
+      }
+
+      .btn-machine {
+        flex: 1;
+        padding: 10px 8px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition:
+          transform 0.15s ease,
+          opacity 0.15s ease;
+      }
+
+      .btn-machine:active {
+        transform: scale(0.97);
+      }
+
+      .btn-machine:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .btn-print {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+
+      .btn-tare {
+        background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+      }
+
+      .btn-zero {
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+      }
+
+      .weight-center {
+        position: fixed;
+        top: 45%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 100;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .digital-subtitle {
+        display: flex;
+        text-align: center;
+        font-size: clamp(14px, 4.5vw, 50px);
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+        transition:
+          color 0.4s ease,
+          text-shadow 0.4s ease;
+        max-width: min(95vw, 1200px);
+        padding: 0 12px;
+        line-height: 1.25;
+        word-break: break-word;
+      }
+
+      .digital-target {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .digital-target-label {
+        font-size: clamp(24px, 8vw, 80px);
+        color: rgba(255, 255, 255, 0.5);
+        letter-spacing: 3px;
+        font-family: "Courier New", monospace;
+      }
+
+      .digital-target-value {
+        font-family: "DSEG7Classic", "Courier New", monospace;
+        font-size: clamp(28px, 9vw, 80px);
+        font-weight: bold;
+        color: rgba(208, 255, 0, 0.97);
+        text-shadow: 0 0 8px rgba(0, 255, 100, 0.3);
+      }
+
+      .digital-target-unit {
+        font-family: "DSEG7Classic", "Courier New", monospace;
+        font-size: 22px;
+        color: rgba(0, 200, 70, 0.4);
+      }
+
+      .bottom-center {
+        width: min(100%, 100vw);
+        max-width: 100vw;
+        display: flex;
+        position: fixed;
+        bottom: 88px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        text-align: center;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 0 12px;
+      }
+
+      .meter-actions-bottom {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 101;
+        padding: 12px 16px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        background: rgba(0, 0, 0, 0.88);
+        border-top: 1px solid rgba(102, 126, 234, 0.35);
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 10px;
+        }
+
+        .meter-card {
+          padding: 10px 0;
+        }
+
+        .meter-top-bar {
+          padding: 8px 10px;
+          padding-top: max(8px, env(safe-area-inset-top));
+        }
+
+        .meter-mcid-panel {
+          width: 100%;
+        }
+
+        .meter-datetime h2 {
+          font-size: 13px;
+          padding: 8px 12px;
+          letter-spacing: 0.5px;
+        }
+
+        .meter-header {
+          top: 178px;
+          width: calc(100% - 20px);
+          padding: 0 8px;
+        }
+
+        .meter-mcid {
+          padding: 10px 14px;
+        }
+
+        .mcid-label {
+          margin-left: 0;
+          font-size: 16px;
+        }
+
+        .mcid-value {
+          font-size: 22px;
+        }
+
+        .mcid-status {
+          font-size: 15px;
+        }
+
+        .mcid-sep {
+          display: none;
+        }
+
+        .machine-select {
+          font-size: 16px;
+          padding: 10px 12px;
+        }
+
+        .meter-title {
+          font-size: 18px;
+          white-space: normal;
+          line-height: 1.3;
+        }
+
+        .meter-header .meter-subtitle {
+          font-size: 13px;
+        }
+
+        .weight-center {
+          top: 50%;
+          width: 100%;
+          padding: 0 8px;
+        }
+
+        .digital-weight {
+          letter-spacing: 2px;
+        }
+
+        .bottom-center {
+          bottom: max(82px, calc(72px + env(safe-area-inset-bottom)));
+        }
+
+        .meter-actions-bottom {
+          padding: 10px 12px;
+          padding-bottom: max(10px, env(safe-area-inset-bottom));
+        }
+
+        .meter-actions {
+          gap: 6px;
+        }
+
+        .btn-machine {
+          font-size: 14px;
+          padding: 10px 6px;
+        }
+
+        .digital-target {
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .meter-header {
+          top: 188px;
+        }
+
+        .meter-datetime h2 {
+          font-size: 11px;
+          padding: 6px 10px;
+        }
+
+        .meter-title {
+          font-size: 16px;
+        }
+
+        .digital-weight {
+          font-size: clamp(56px, 18vw, 120px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="xTop mt-4">
+      <div class="meter-card">
+        <div class="meter-top-bar">
+          <div class="meter-datetime">
+            <h2 id="iDatetime" class="meter-subtitle">date time</h2>
+          </div>
+          <div class="meter-mcid-panel">
+            <div class="meter-mcid">
+              <span id="statusIndicator"></span>
+              <span class="mcid-label">เครื่องชั่ง</span>
+              <span id="displayMcID" class="mcid-value">1</span>
+              <span class="mcid-sep">|</span>
+              <span class="mcid-status">เชื่อมต่อแล้ว</span>
+            </div>
+            <div class="meter-mcid-select">
+              <select
+                id="machineSelect"
+                class="machine-select"
+                aria-label="เลือกเครื่องชั่ง"
+              >
+                <option
+                  value="0"
+                  data-tare="T"
+                  data-print="P"
+                  data-zero="Z"
+                  data-rang-max="30.00"
+                >
+                  McID 0
+                </option>
+                <option
+                  value="1"
+                  data-tare="T"
+                  data-print="P"
+                  data-zero="Z"
+                  data-rang-max="6.00"
+                  selected
+                >
+                  McID 1
+                </option>
+                <option
+                  value="2"
+                  data-tare="T"
+                  data-print="P"
+                  data-zero="Z"
+                  data-rang-max="25.00"
+                >
+                  McID 2
+                </option>
+                <option
+                  value="3"
+                  data-tare="T"
+                  data-print="P"
+                  data-zero="Z"
+                  data-rang-max="40.00"
+                >
+                  McID 3
+                </option>
+                <option
+                  value="4"
+                  data-tare="T"
+                  data-print="P"
+                  data-zero="Z"
+                  data-rang-max="1000.00"
+                >
+                  McID 4
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="meter-header">
+          <h1 class="meter-title">ระบบชั่งน้ำหนักอัจฉริยะ</h1>
+          <p class="meter-subtitle">POSE Measurement System</p>
+        </div>
+
+        <div class="weight-center">
+          <div id="weightGauge" class="digital-weight" data-ghost="8.888">
+            0.000
+          </div>
+        </div>
+
+        <div class="bottom-center">
+          <div id="iSubtitle" class="digital-subtitle">-</div>
+          <div class="digital-target">
+            <span class="digital-target-label">TARGET</span>
+            <span id="TargetWeight" class="digital-target-value">0</span>
+            <span class="digital-target-label">kg</span>
+          </div>
+        </div>
+
+        <div class="meter-actions-bottom">
+          <div class="meter-actions">
+            <button type="button" class="btn-machine btn-print" id="btnPrint">
+              Print
+            </button>
+            <button type="button" class="btn-machine btn-tare" id="btnTare">
+              Tare
+            </button>
+            <button type="button" class="btn-machine btn-zero" id="btnZero">
+              Zero
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- End Modal -->
+
+    <script type="text/javascript" src="./js/jquery.min.js"></script>
+    <script type="text/javascript" src="./js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="./js/sweetalert.min.js"></script>
+    <script type="text/javascript" src="./js/jquery.simplegauge.js"></script>
+    <script src="./js/mqttws31s.js"></script>
+    <script src="./js/config.js"></script>
+
+    <script>
+      var url = "https://phc.dyndns.biz/poseweight/";
+      var selectedMcID = 1;
+      var iDay = -30;
+
+      var iMcID = 0;
+      var McID = 0;
+      var iWeight = 0;
+      var iPo = 0;
+      var iStep = 0;
+      var xDec = "0.000";
+      var iMaterialNo = 0;
+      var reconnectTimeout = 5000; // 5 วินาที
+      // ==================
+      // Digital Display
+      // ==================
+      function setDigitalWeight(value, colorClass) {
+        // ghost = ตัวเลข 8 ทั้งหมด ตาม format เดิม (สำหรับ dim-segment layer)
+        var ghost = value.toString().replace(/[0-9]/g, "8");
+        $("#weightGauge").text(value).attr("data-ghost", ghost);
+        $("#weightGauge").removeClass("weight-yellow weight-red");
+        $("#digitalUnit").removeClass("weight-yellow weight-red");
+        if (colorClass) {
+          $("#weightGauge").addClass(colorClass);
+          $("#digitalUnit").addClass(colorClass);
+        }
+      }
+
+      function applySubtitleStyle(detailLength) {
+        var fontSize = 70;
+        if (detailLength > 95) {
+          fontSize = 20;
+        } else if (detailLength > 80) {
+          fontSize = 30;
+        } else if (detailLength > 70) {
+          fontSize = 40;
+        } else if (detailLength > 60) {
+          fontSize = 50;
+        } else if (detailLength > 50) {
+          fontSize = 60;
+        }
+        if (window.innerWidth <= 768) {
+          fontSize = Math.max(12, Math.round(fontSize * 0.42));
+        }
+        $("#iSubtitle").css({
+          display: "flex",
+          textAlign: "center",
+          fontSize: fontSize + "px",
+          fontWeight: "600",
+          color: "rgba(255, 255, 255, 0.85)",
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+          textShadow: "0 0 10px rgba(255, 255, 255, 0.6)",
+          transition: "color 0.4s ease, text-shadow 0.4s ease",
+        });
+      }
+
+      function isSelectedMcID(value) {
+        if (
+          selectedMcID === null ||
+          value === undefined ||
+          value === null ||
+          value === ""
+        ) {
+          return false;
+        }
+        return parseInt(value, 10) === parseInt(selectedMcID, 10);
+      }
+
+      function resetMeterDisplay() {
+        iMcID = 0;
+        iWeight = 0;
+        setDigitalWeight("0.000");
+        $("#iSubtitle").text("-");
+        $("#TargetWeight").text("0");
+        $("#displayMcID").text(selectedMcID !== null ? selectedMcID : "-");
+      }
+
+      function getSelectedMachineData() {
+        var $option = $("#machineSelect option:selected");
+        if (!$option.length) {
+          return null;
+        }
+        return {
+          McID: parseInt($option.val(), 10),
+          Tare: $option.attr("data-tare") || "",
+          Print: $option.attr("data-print") || "",
+          Zero: $option.attr("data-zero") || "",
+          rang_max: $option.attr("data-rang-max") || "",
+        };
+      }
+
+      function SendMessage(destTopic, msg) {
+        if (
+          !window.client ||
+          !window.client.isConnected ||
+          !window.client.isConnected()
+        ) {
+          alert("MQTT ยังไม่เชื่อมต่อ");
+          return false;
+        }
+        var message = new Paho.MQTT.Message(msg);
+        message.destinationName = destTopic;
+        window.client.send(message);
+        return true;
+      }
+
+      function buildCommandPayload(machine, commandKey) {
+        var cmd = String(machine[commandKey]).trim();
+        var mcId = String(machine.McID);
+
+        try {
+          var parsed = JSON.parse(cmd);
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            parsed.McID = mcId;
+            return JSON.stringify(parsed);
+          }
+        } catch (e) {}
+
+        return JSON.stringify({
+          McID: mcId,
+          Action: commandKey,
+          Cmd: cmd,
+        });
+      }
+
+      function sendMachineCommand(commandKey, options) {
+        options = options || {};
+        var silent = options.silent === true;
+        var machine = getSelectedMachineData();
+        if (!machine) {
+          if (!silent) {
+            alert("กรุณาเลือกเครื่องชั่ง");
+          }
+          return false;
+        }
+
+        if (!machine[commandKey] || String(machine[commandKey]).trim() === "") {
+          if (!silent) {
+            alert("ไม่พบคำสั่ง " + commandKey + " สำหรับ McID " + machine.McID);
+          }
+          return false;
+        }
+
+        var payload = buildCommandPayload(machine, commandKey);
+        if (SendMessage(topic, payload)) {
+          console.log("Sent MQTT command:", commandKey, payload);
+          return true;
+        }
+        return false;
+      }
+
+      function sendMachineCommandWithPrint(commandKey) {
+        sendMachineCommand(commandKey);
+        sendMachineCommand("Print", { silent: true });
+      }
+
+      $(function () {
+        setDigitalWeight("0.000");
+        $("#weightGauge").attr("data-ghost", "8.888");
+        if (selectedMcID !== null) {
+          $("#displayMcID").text(selectedMcID);
+        }
+
+        $("#machineSelect").on("change", function () {
+          selectedMcID = parseInt(this.value, 10);
+          resetMeterDisplay();
+
+          var nextUrl = new URL(window.location.href);
+          nextUrl.searchParams.set("McID", selectedMcID);
+          window.history.replaceState({}, "", nextUrl.toString());
+        });
+
+        $("#btnPrint").on("click", function () {
+          sendMachineCommand("Print");
+        });
+        $("#btnTare").on("click", function () {
+          sendMachineCommandWithPrint("Tare");
+        });
+        $("#btnZero").on("click", function () {
+          sendMachineCommandWithPrint("Zero");
+        });
+      });
+
+      // ==================
+      // MQTT
+      // ==================
+      // เริ่มเชื่อมต่อครั้งแรก
+      MQTTconnect();
+
+      function onConnect() {
+        client.subscribe(topic, {
+          qos: 0,
+        });
+      }
+
+      function onConnectionLost(responseObject) {
+        console.log("Connection Lost: " + responseObject.errorMessage);
+        // แสดงสถานะหลุดการเชื่อมต่อ
+        $("#statusIndicator").css({ background: "#424242" });
+        if (responseObject.errorCode !== 0) {
+          setTimeout(MQTTconnect, reconnectTimeout);
+        }
+      }
+
+      function MQTTconnect() {
+        try {
+          // สร้าง options ใหม่ทุกครั้ง เพื่อป้องกัน property แปลกปลอม
+          var options = {
+            timeout: 3,
+            useSSL: useTLS,
+            cleanSession: cleansession,
+            onSuccess: onConnect,
+            onFailure: function (message) {
+              setTimeout(MQTTconnect, reconnectTimeout);
+            },
+          };
+          if (username != null) {
+            options.userName = username;
+            options.password = password;
+          }
+          // ถ้ามี client เดิม ให้ disconnect ก่อน
+          if (
+            window.client &&
+            window.client.isConnected &&
+            window.client.isConnected()
+          ) {
+            window.client.disconnect();
+          }
+          // สร้าง client ใหม่ทุกครั้ง
+          window.client = new Paho.MQTT.Client(
+            host,
+            port,
+            path,
+            "web_" + parseInt(Math.random() * 10000, 10),
+          );
+          window.client.onConnectionLost = onConnectionLost;
+          window.client.onMessageArrived = onMessageArrived;
+          window.client.connect(options);
+          // แสดงสถานะกำลังเชื่อมต่อ
+          $("#statusIndicator").css({ background: "#ffe066" });
+        } catch (e) {
+          console.error("MQTTconnect error:", e);
+          setTimeout(MQTTconnect, reconnectTimeout);
+        }
+      }
+
+      let statusIndicator = true;
+
+      function onMessageArrived(message) {
+        const promiseA = new Promise((resolve, reject) => {
+          let iData = message.payloadString;
+          console.log("Received MQTT message:", iData);
+          try {
+            var temp = $.parseJSON(iData);
+            var msgMcID = temp.McID != null ? temp.McID : temp.iMcID;
+
+            if (isSelectedMcID(msgMcID)) {
+              if (statusIndicator) {
+                $("#statusIndicator").css({
+                  width: "12px",
+                  height: "12px",
+                  borderRadius: "50%",
+                  background: "#48bb78",
+                });
+                statusIndicator = false;
+              } else {
+                $("#statusIndicator").css({
+                  width: "12px",
+                  height: "12px",
+                  borderRadius: "50%",
+                  background: "#222222",
+                });
+                statusIndicator = true;
+              }
+            }
+
+            if (isSelectedMcID(temp.iMcID) && temp.iDetail != null) {
+              iMcID = temp.iMcID;
+              iWeight = temp.iWeight;
+
+              applySubtitleStyle((temp.iDetail || "").length);
+              $("#iSubtitle").text(temp.iDetail || "");
+              $("#TargetWeight").text(iWeight);
+              $("#displayMcID").text(iMcID || "-");
+            }
+
+            if (isSelectedMcID(temp.McID) && temp.Success === "OK") {
+              iMcID = 0;
+              iWeight = 0;
+              setDigitalWeight("0.000");
+            }
+
+            if (
+              isSelectedMcID(msgMcID) &&
+              temp.Weight != null &&
+              temp.Weight !== ""
+            ) {
+              McID = msgMcID;
+              iMcID = msgMcID;
+              // อัปเดตมิเตอร์น้ำหนัก
+              let xDec = temp.Weight.toString();
+              let xPosition = xDec.indexOf(".");
+              if (xPosition >= 0) {
+                xDec = xDec.substring(0, xPosition + 4);
+              }
+
+              var weight = parseFloat(xDec) || 0;
+
+              $("#displayMcID").text(msgMcID || "-");
+
+              if (parseFloat(weight) <= 0) {
+                setDigitalWeight(xDec, "weight-red");
+              } else if (
+                parseFloat(iWeight) > 0 &&
+                parseFloat(weight) == parseFloat(iWeight)
+              ) {
+                setDigitalWeight(xDec, "weight-green");
+              } else if (
+                parseFloat(iWeight) > 0 &&
+                parseFloat(weight) < parseFloat(iWeight)
+              ) {
+                setDigitalWeight(xDec, "weight-yellow");
+              } else if (
+                parseFloat(iWeight) > 0 &&
+                parseFloat(weight) > parseFloat(iWeight)
+              ) {
+                setDigitalWeight(xDec, "weight-red");
+              } else {
+                setDigitalWeight(xDec, "");
+              }
+            }
+          } catch (e) {
+            console.log("Error#542-decode error");
+          }
+        });
+      }
+
+      function showTime() {
+        const now = new Date();
+
+        const dd = String(now.getDate()).padStart(2, "0");
+        const mm1 = String(now.getMonth() + 1).padStart(2, "0");
+        const yyyy = now.getFullYear();
+
+        const hh = String(now.getHours()).padStart(2, "0");
+        const mm2 = String(now.getMinutes()).padStart(2, "0");
+        const ss = String(now.getSeconds()).padStart(2, "0");
+        // now.toLocaleDateString("th-TH") + " " + now.toLocaleTimeString("th-TH");
+        $("#iDatetime").text(`${dd}/${mm1}/${yyyy} ${hh}:${mm2}:${ss}`);
+      }
+
+      // เรียกครั้งแรกทันที
+      showTime();
+
+      // อัปเดตทุก 1 วินาที
+      setInterval(showTime, 1000);
+    </script>
+  </body>
+</html>
