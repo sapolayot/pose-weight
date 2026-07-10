@@ -1,3 +1,141 @@
+function isFirstMaterialScanStep(step) {
+  return (
+    (weighState?.type === "R" || weighState?.type === "P") &&
+    step?.kind === "scan" &&
+    Number(step.id) === 1
+  );
+}
+
+function isApiValidatedScanStep(stepId) {
+  return (
+    (weighState?.type === "R" || weighState?.type === "P") && stepId === 1
+  );
+}
+
+function isInventoryExpired(inventory) {
+  if (Number(inventory?.dayDiff) < 0) return true;
+
+  const expDate = inventory?.expDate;
+  if (!expDate) return false;
+
+  const parts = expDate.split("-").map(Number);
+  if (parts.length !== 3) return false;
+
+  const [day, month, year] = parts;
+  const exp = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return exp < today;
+}
+
+function getStockRemainingQty() {
+  if (weighState?.scanInventory?.qty != null) {
+    return Number(weighState.scanInventory.qty) || 0;
+  }
+
+  return getMockStockRemaining();
+}
+
+function getScanDisplayCode(stepId, scannedCode) {
+  if (weighState?.scanInventory?.lotNo) return weighState.scanInventory.lotNo;
+  if (weighState?.scanInventory?.invCode)
+    return weighState.scanInventory.invCode;
+  return scannedCode;
+}
+
+function getScanHighlightAction(stepId) {
+  if (!isApiValidatedScanStep(stepId) || !weighState.scanValidated) {
+    return null;
+  }
+
+  return weighState.scanAlert || "pass";
+}
+
+function isScanActionDisabled(action, stepId) {
+  if (isApiValidatedScanStep(stepId)) {
+    if (!weighState.scanValidated || weighState.scanLoading) return true;
+    if (action.id === "pass") return !canPassScanStep(stepId);
+    return true;
+  }
+
+  const isPass = action.id === "pass";
+  return isPass ? !canPassScanStep(stepId) : false;
+}
+
+async function fetchInventoryByQrCode(invCode, itemCode) {
+  const params = new URLSearchParams({
+    invCode,
+    itemCode: itemCode || "",
+  });
+
+  const response = await fetch(
+    `${API_URL}/wh-inventory/qrcode?${params.toString()}`,
+    { credentials: "include" },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to validate QR code");
+  }
+
+  return response.json();
+}
+
+function resolveMaterialScanAlert(inventory) {
+  if (isInventoryExpired(inventory)) return "expired";
+
+  const qty = Number(inventory.qty) || 0;
+  const required = Number(weighState.amount) || 0;
+
+  if (qty < required) return "no_stock";
+
+  return null;
+}
+
+async function handleMaterialQrScan(invCode) {
+  const stepId = 1;
+
+  weighState.scanAlert = null;
+  weighState.scanValidated = false;
+  weighState.scanInventory = null;
+  weighState.scanLoading = true;
+  weighState.completedSteps[stepId] = {
+    ...(weighState.completedSteps[stepId] || {}),
+    scanCode: invCode,
+    locked: false,
+  };
+
+  renderWeighSteps();
+
+  try {
+    const payload = await fetchInventoryByQrCode(invCode, weighState.itemCode);
+    const inventory = Array.isArray(payload.data) ? payload.data[0] : null;
+
+    if (!payload.success || !inventory) {
+      weighState.scanAlert = "mismatch";
+      weighState.scanValidated = true;
+      return;
+    }
+
+    weighState.scanInventory = inventory;
+    weighState.scanAlert = resolveMaterialScanAlert(inventory);
+    weighState.scanValidated = true;
+
+    if (!weighState.scanAlert) {
+      weighState.completedSteps[stepId].scanCode =
+        inventory.lotNo || inventory.invCode || invCode;
+    }
+  } catch (error) {
+    console.error(error);
+    weighState.scanAlert = "mismatch";
+    weighState.scanValidated = true;
+  } finally {
+    weighState.scanLoading = false;
+    renderWeighSteps();
+    focusScanInput();
+  }
+}
+
 const WEIGH_WORKFLOWS = {
   R: {
     label: "ชั่งน้ำหนักเคมี",
@@ -58,6 +196,7 @@ const WEIGH_WORKFLOWS = {
       { id: "pass", label: "ผ่าน", tone: "neutral", advance: true },
       { id: "no_stock", label: "สต็อกไม่พอ", tone: "warning", advance: false },
       { id: "mismatch", label: "ไม่ตรง", tone: "danger", advance: false },
+      { id: "expired", label: "หมดอายุ", tone: "danger", advance: false },
     ],
   },
 };
@@ -78,6 +217,20 @@ function formatWeighAmount(value) {
   });
 }
 
+function formatQuantityAmount(value) {
+  if (value == null || value === "") return "—";
+  const num = Number(value);
+  if (Number.isNaN(num)) return "—";
+  if (Number.isInteger(num)) {
+    return num.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  }
+  return formatWeighAmount(num);
+}
+
+function formatQtyWithUnit(value, unit) {
+  return `${formatQuantityAmount(value)} ${unit}`;
+}
+
 function getWorkflow(type) {
   return WEIGH_WORKFLOWS[type] || WEIGH_WORKFLOWS.R;
 }
@@ -88,6 +241,8 @@ function openWeighPanel({
   amount,
   unit,
   round = null,
+  itemCode = "",
+  productCode = "",
   productName = "",
   batchNo = "",
   docNo = "PB-BL03.3",
@@ -98,6 +253,8 @@ function openWeighPanel({
   weighState = {
     type,
     itemName: name,
+    itemCode,
+    productCode,
     amount,
     unit,
     round,
@@ -113,13 +270,17 @@ function openWeighPanel({
     scanAlert: null,
     scaleAlert: null,
     stepAlert: null,
+    quantityAlert: null,
     stockAcknowledged: false,
+    scanValidated: false,
+    scanInventory: null,
+    scanLoading: false,
   };
 
   scanBuffer = "";
   clearScanTimer();
 
-  document.getElementById("summaryPanel")?.classList.remove("active");
+  hideSummaryPanels();
 
   const panel = document.getElementById("weighPanel");
   document.getElementById("weighLabel").textContent = getWorkflow(type).label;
@@ -135,19 +296,27 @@ function openWeighPanel({
 }
 
 function closeWeighPanel() {
+  closeQrScanner();
   clearScanTimer();
   scanBuffer = "";
   document.getElementById("scanInput")?.blur();
+  hideSummaryPanels();
   document.getElementById("weighPanel")?.classList.remove("active");
   weighState = null;
 }
 
+function hideSummaryPanels() {
+  document.getElementById("summaryPanel")?.classList.remove("active");
+  document.getElementById("packagingSummaryPanel")?.classList.remove("active");
+}
+
 function closeSummaryPanel() {
+  closeQrScanner();
   clearScanTimer();
   scanBuffer = "";
   document.getElementById("scanInput")?.blur();
   document.getElementById("printPreviewPanel")?.classList.remove("active");
-  document.getElementById("summaryPanel")?.classList.remove("active");
+  hideSummaryPanels();
   document.getElementById("weighPanel")?.classList.remove("active");
   document.getElementById("withdrawPanel")?.classList.remove("active");
   weighState = null;
@@ -161,22 +330,35 @@ function formatPrintWeight(value) {
 }
 
 function getInspectorName() {
-  const select = document.getElementById("summaryInspector");
+  const isPackaging = document
+    .getElementById("packagingSummaryPanel")
+    ?.classList.contains("active");
+  const select = document.getElementById(
+    isPackaging ? "pkgSummaryInspector" : "summaryInspector",
+  );
   if (!select?.value) return "—";
   return select.options[select.selectedIndex].text;
 }
 
 function clearSummaryInspectorError() {
-  const select = document.getElementById("summaryInspector");
-  const errorEl = document.getElementById("summaryInspectorError");
-
-  select?.classList.remove("summary-select--error");
-  if (errorEl) errorEl.hidden = true;
+  document.querySelectorAll(".summary-select--error").forEach((select) => {
+    select.classList.remove("summary-select--error");
+  });
+  document.querySelectorAll(".summary-field-error").forEach((errorEl) => {
+    errorEl.hidden = true;
+  });
 }
 
 function validateSummaryInspector() {
-  const select = document.getElementById("summaryInspector");
-  const errorEl = document.getElementById("summaryInspectorError");
+  const isPackaging = document
+    .getElementById("packagingSummaryPanel")
+    ?.classList.contains("active");
+  const selectId = isPackaging ? "pkgSummaryInspector" : "summaryInspector";
+  const errorId = isPackaging
+    ? "pkgSummaryInspectorError"
+    : "summaryInspectorError";
+  const select = document.getElementById(selectId);
+  const errorEl = document.getElementById(errorId);
 
   if (!select) return false;
 
@@ -185,6 +367,7 @@ function validateSummaryInspector() {
     return true;
   }
 
+  clearSummaryInspectorError();
   select.classList.add("summary-select--error");
   if (errorEl) errorEl.hidden = false;
   select.focus();
@@ -224,10 +407,7 @@ function buildPrintTagData({
     batchNo: batchNo || "—",
     qrCode: batchNo || "—",
     productName: formatTagProductName(productName || itemName),
-    batchSize:
-      batchSize && batchUnit
-        ? `${formatWeighAmount(Number(batchSize))} ${batchUnit}`
-        : "—",
+    batchSize: batchSize && batchUnit ? `${batchSize} ${batchUnit}` : "—",
     materialCode,
     materialLot,
     controlCode: code || materialLot,
@@ -300,6 +480,7 @@ function showPrintPreviewPanel() {
   );
 
   document.getElementById("summaryPanel")?.classList.remove("active");
+  document.getElementById("packagingSummaryPanel")?.classList.remove("active");
   document.getElementById("printPreviewPanel")?.classList.add("active");
 }
 
@@ -309,7 +490,11 @@ function closePrintPreviewPanel() {
   if (printPreviewReturnTo === "withdraw") {
     document.getElementById("withdrawPanel")?.classList.add("active");
   } else if (printPreviewReturnTo === "summary") {
-    document.getElementById("summaryPanel")?.classList.add("active");
+    if (weighState?.type === "P") {
+      document.getElementById("packagingSummaryPanel")?.classList.add("active");
+    } else {
+      document.getElementById("summaryPanel")?.classList.add("active");
+    }
   }
 
   printPreviewReturnTo = null;
@@ -360,11 +545,168 @@ function getStepStatus(stepId) {
   return "locked";
 }
 
+function canEditStep(stepId) {
+  if (!weighState) return false;
+  if (stepId !== 2) return false;
+
+  const stepData = weighState.completedSteps[stepId];
+  if (!stepData?.locked) return false;
+
+  return weighState.currentStep === 3;
+}
+
+function reopenStep(stepId) {
+  if (!weighState || !canEditStep(stepId)) return;
+
+  const workflow = getWorkflow(weighState.type);
+
+  workflow.steps.forEach((step) => {
+    if (step.id >= stepId) {
+      delete weighState.completedSteps[step.id];
+      delete weighState.stepDraft[step.id];
+    }
+  });
+
+  weighState.currentStep = stepId;
+  weighState.scanAlert = null;
+  weighState.scaleAlert = null;
+  weighState.stepAlert = null;
+  weighState.quantityAlert = null;
+  weighState.stockAcknowledged = false;
+  weighState.scanValidated = false;
+  weighState.scanInventory = null;
+  weighState.scanLoading = false;
+
+  renderWeighSteps();
+  focusScanInput();
+}
+
+function getScaleSummary(scaleId) {
+  const maxMap = {
+    "PB-BL03.3": "6 kg",
+    "PB-BL04.3": "60 kg",
+  };
+
+  return `${scaleId} · Max ${maxMap[scaleId] || scaleId}`;
+}
+
+function getStepSummaryText(step) {
+  const data = weighState.completedSteps[step.id] || {};
+  const draft = weighState.stepDraft[step.id] || {};
+
+  if (data.scale) return getScaleSummary(data.scale);
+  if (data.scanCode) return data.scanCode;
+  if (data.quantity != null) {
+    return `${formatWeighAmount(data.quantity)} ${weighState.unit}`;
+  }
+  if (data.weight != null) {
+    return `${formatWeighAmount(data.weight)} ${data.unit || step.unit || weighState.unit}`;
+  }
+  if (draft.recorded && draft.weight != null) {
+    return `${formatWeighAmount(draft.weight)} ${step.unit || weighState.unit}`;
+  }
+  if (draft.tared) return `0.00 ${step.unit || "g"}`;
+  if (data.actionLabel) return data.actionLabel;
+
+  return "";
+}
+
+function getStepDescription(step) {
+  const workflow = getWorkflow(weighState.type);
+
+  if (step.desc) return step.desc;
+  if (step.kind === "scan" && step.id === 1) return workflow.scanDesc;
+
+  return "";
+}
+
+function renderStepStatusIcon(stepId, variant, clickable = false) {
+  if (variant === "none") {
+    return '<span class="weigh-step-status weigh-step-status--placeholder" aria-hidden="true"></span>';
+  }
+
+  if (variant === "lock") {
+    return `
+      <span class="weigh-step-status weigh-step-status--lock" aria-label="ยังไม่เปิด">
+        <i class="fa-solid fa-lock"></i>
+      </span>
+    `;
+  }
+
+  if (variant === "check") {
+    return `
+      <span class="weigh-step-status weigh-step-status--done" aria-label="เสร็จแล้ว">
+        <i class="fa-solid fa-check"></i>
+      </span>
+    `;
+  }
+
+  if (variant === "edit" && clickable) {
+    return `
+      <button
+        type="button"
+        class="weigh-step-status weigh-step-status--edit"
+        data-edit-step="${stepId}"
+        aria-label="แก้ไข"
+      >
+        <i class="fa-solid fa-pen-to-square"></i>
+      </button>
+    `;
+  }
+
+  return '<span class="weigh-step-status weigh-step-status--placeholder" aria-hidden="true"></span>';
+}
+
+function renderStepRow(step, { variant, summary = "" }) {
+  let statusVariant = "none";
+
+  if (variant === "done") statusVariant = "check";
+  else if (variant === "editable") statusVariant = "edit";
+  else if (variant === "locked") statusVariant = "lock";
+
+  return `
+    <div class="weigh-step-row">
+      <span class="weigh-step-num">${step.id}</span>
+      <div class="weigh-step-summary">
+        <span class="weigh-step-title">${step.title}</span>
+        ${summary ? `<span class="weigh-step-result">${summary}</span>` : ""}
+      </div>
+      ${renderStepStatusIcon(step.id, statusVariant, variant === "editable")}
+    </div>
+  `;
+}
+
 function areAllStepsCompleted() {
   const workflow = getWorkflow(weighState.type);
   return workflow.steps.every(
     (step) => weighState.completedSteps[step.id]?.locked,
   );
+}
+
+function canShowSummary() {
+  if (!weighState || !areAllStepsCompleted()) return false;
+
+  if (weighState.type === "P") {
+    const quantityStep = getWorkflow("P").steps.find(
+      (step) => step.kind === "quantity",
+    );
+    const stepData = quantityStep
+      ? weighState.completedSteps[quantityStep.id]
+      : null;
+    return stepData?.locked && stepData.quantity != null;
+  }
+
+  return true;
+}
+
+function clearScanInput() {
+  clearScanTimer();
+  scanBuffer = "";
+  const input = document.getElementById("scanInput");
+  if (input) {
+    input.value = "";
+    input.blur();
+  }
 }
 
 function completeStep(stepId, result = {}) {
@@ -373,14 +715,20 @@ function completeStep(stepId, result = {}) {
   weighState.scanAlert = null;
   weighState.scaleAlert = null;
   weighState.stepAlert = null;
+  weighState.quantityAlert = null;
   weighState.stockAcknowledged = false;
 
-  if (!areAllStepsCompleted()) {
+  if (!canShowSummary()) {
     renderWeighSteps();
-    focusScanInput();
+    if (getActiveScanStep()) {
+      focusScanInput();
+    } else {
+      clearScanInput();
+    }
     return;
   }
 
+  clearScanInput();
   showSummaryPanel();
 }
 
@@ -433,6 +781,8 @@ function getSummaryWeights() {
 }
 
 function getMaterialLot() {
+  if (weighState.scanInventory?.lotNo) return weighState.scanInventory.lotNo;
+
   const scanStep = weighState.completedSteps[1];
   return scanStep?.scanCode || "L26070608";
 }
@@ -444,12 +794,68 @@ function getWeigherName() {
   return "Admin";
 }
 
-function showSummaryPanel() {
-  if (!weighState || !areAllStepsCompleted()) return;
+function getProductCodeFromContext() {
+  if (weighState.productCode) return weighState.productCode;
+  const match = String(weighState.productName || "").match(/^([^:]+)/);
+  return match ? match[1].trim() : "C01";
+}
+
+function showPackagingSummaryPanel() {
+  if (!canShowSummary()) return;
 
   clearScanTimer();
   scanBuffer = "";
   document.getElementById("scanInput")?.blur();
+
+  const weights = getSummaryWeights();
+  const materialLot = getMaterialLot();
+  const batchNo = weighState.batchNo || "C01160626B";
+  const productCode = getProductCodeFromContext();
+  const itemCode = weighState.itemCode || "—";
+  const lotRound = weighState.round || 1;
+  const productTitle = formatTagProductName(
+    weighState.productName || "POSE LIQUID SOAP",
+  );
+  const qtyText = formatQtyWithUnit(weights.net, weights.unit);
+  const targetText = formatQtyWithUnit(weights.target, weights.unit);
+
+  document.getElementById("weighPanel").classList.remove("active");
+  hideSummaryPanels();
+
+  document.getElementById("pkgSummaryItemName").textContent =
+    weighState.itemName;
+  document.getElementById("pkgSummaryMeta").textContent =
+    `${productCode} · ${itemCode}`;
+  document.getElementById("pkgSummaryTarget").textContent = targetText;
+  document.getElementById("pkgSummaryLotLine").textContent =
+    `Lot ${lotRound} — ${materialLot}`;
+  document.getElementById("pkgSummaryLotQty").textContent = qtyText;
+  document.getElementById("pkgSummaryProductName").textContent = productTitle;
+  document.getElementById("pkgSummaryBatchNo").textContent = batchNo;
+  document.getElementById("pkgSummaryPackagingLot").textContent = materialLot;
+  document.getElementById("pkgSummaryControlCode").textContent = itemCode;
+  document.getElementById("pkgSummaryRecorder").textContent = getWeigherName();
+  document.getElementById("pkgSummaryTotal").textContent = qtyText;
+
+  const inspector = document.getElementById("pkgSummaryInspector");
+  if (inspector) inspector.value = "";
+  clearSummaryInspectorError();
+
+  document.getElementById("packagingSummaryPanel").classList.add("active");
+}
+
+function showSummaryPanel() {
+  if (!canShowSummary()) return;
+
+  if (weighState.type === "P") {
+    showPackagingSummaryPanel();
+    return;
+  }
+
+  clearScanTimer();
+  scanBuffer = "";
+  document.getElementById("scanInput")?.blur();
+  hideSummaryPanels();
 
   const weights = getSummaryWeights();
   const materialLot = getMaterialLot();
@@ -496,11 +902,22 @@ function showSummaryPanel() {
   clearSummaryInspectorError();
 
   document.getElementById("summaryPanel").classList.add("active");
+  document.getElementById("packagingSummaryPanel")?.classList.remove("active");
 }
 
 function canPassScanStep(stepId) {
   const stepData = weighState.completedSteps[stepId] || {};
-  return Boolean(stepData.scanCode?.trim());
+  if (!stepData.scanCode?.trim()) return false;
+
+  if (isApiValidatedScanStep(stepId)) {
+    return (
+      weighState.scanValidated &&
+      !weighState.scanLoading &&
+      weighState.scanAlert === null
+    );
+  }
+
+  return true;
 }
 
 function renderScanAlert(stepId) {
@@ -530,9 +947,16 @@ function renderScanAlert(stepId) {
   }
 
   if (alert === "no_stock") {
-    const lot = weighState.completedSteps[stepId]?.scanCode || "L26070609";
+    const lot =
+      weighState.scanInventory?.lotNo ||
+      weighState.completedSteps[stepId]?.scanCode?.trim() ||
+      "—";
     const required = formatWeighAmount(weighState.amount);
-    const remaining = formatWeighAmount(getMockStockRemaining());
+    const remaining = formatWeighAmount(getStockRemainingQty());
+    const stockUnit = weighState.unit;
+    const canContinue =
+      canPassScanStep(stepId) ||
+      Boolean(weighState.completedSteps[stepId]?.scanCode?.trim());
 
     return `
       <div class="scan-alert scan-alert--stock">
@@ -546,11 +970,11 @@ function renderScanAlert(stepId) {
         </div>
         <div class="scan-alert-stock-row">
           <span>ยอดที่ต้องการ</span>
-          <strong>${required} ${weighState.unit}</strong>
+          <strong>${required} ${stockUnit}</strong>
         </div>
         <div class="scan-alert-stock-row">
           <span>สต็อกคงเหลือ</span>
-          <strong class="scan-alert-stock-low">${remaining} ${weighState.unit}</strong>
+          <strong class="scan-alert-stock-low">${remaining} ${stockUnit}</strong>
         </div>
         <p class="scan-alert-stock-question">
           ต้องการดำเนินการต่อด้วยสต็อกที่มีอยู่?
@@ -559,7 +983,12 @@ function renderScanAlert(stepId) {
           <button type="button" class="stock-cancel-btn" data-step="${stepId}">
             ยกเลิก
           </button>
-          <button type="button" class="stock-continue-btn" data-step="${stepId}">
+          <button
+            type="button"
+            class="stock-continue-btn"
+            data-step="${stepId}"
+            ${canContinue ? "" : "disabled"}
+          >
             ดำเนินการต่อ
           </button>
         </div>
@@ -570,44 +999,80 @@ function renderScanAlert(stepId) {
   return "";
 }
 
+function renderScanBoxButton({
+  scannedCode,
+  extraClass = "",
+  waitingHint = "แตะที่กรอบเพื่อเปิดกล้องสแกน QR",
+  successHint = "สแกน QR/Barcode สำเร็จ",
+  loading = false,
+}) {
+  const hasScan = Boolean(scannedCode);
+  const boxClass = [
+    "scan-box",
+    "scan-box-btn",
+    hasScan ? "scan-box--success" : "",
+    loading ? "scan-box--loading" : "",
+    extraClass,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const hint = loading
+    ? "กำลังตรวจสอบ QR..."
+    : hasScan
+      ? successHint
+      : waitingHint;
+
+  return `
+    <button type="button" class="${boxClass}" aria-label="เปิดกล้องสแกน QR" ${loading ? "disabled" : ""}>
+      <i class="fa-solid fa-qrcode scan-box-icon"></i>
+      <p class="scan-status">${hasScan ? scannedCode : "รอสแกน QR"}</p>
+      <p class="scan-hint">${hint}</p>
+    </button>
+  `;
+}
+
 function renderScanBox(stepId, scannedCode) {
   const workflow = getWorkflow(weighState.type);
   const isActive = getStepStatus(stepId) === "active";
 
   if (!isActive) return "";
 
-  const hasScan = Boolean(scannedCode);
-  const canPass = canPassScanStep(stepId);
+  const displayCode = getScanDisplayCode(stepId, scannedCode);
+  const highlightAction = getScanHighlightAction(stepId);
 
   return `
-    <div class="scan-box ${hasScan ? "scan-box--success" : ""}">
-      <i class="fa-solid fa-qrcode scan-box-icon"></i>
-      <p class="scan-status">${hasScan ? scannedCode : "รอสแกน QR"}</p>
-      <p class="scan-hint">${
-        hasScan ? "สแกน QR/Barcode สำเร็จ" : "กดปุ่มด้านข้างเครื่องเพื่อสแกน"
-      }</p>
-    </div>
-    ${renderScanAlert(stepId)}
-    <div class="weigh-actions">
-      ${workflow.actions
-        .map((action) => {
-          const isPass = action.id === "pass";
-          const disabled = isPass ? !canPass : false;
+    <div class="weigh-step-scan">
+      ${renderScanBoxButton({
+        scannedCode: displayCode,
+        loading: weighState.scanLoading,
+        successHint:
+          weighState.scanAlert === null && weighState.scanValidated
+            ? "ตรวจสอบ QR ผ่าน"
+            : "สแกน QR/Barcode สำเร็จ",
+      })}
+      ${renderScanAlert(stepId)}
+      <div class="weigh-actions weigh-actions--scan">
+        ${workflow.actions
+          .map((action) => {
+            const disabled = isScanActionDisabled(action, stepId);
+            const highlight = highlightAction === action.id;
 
-          return `
-            <button
-              type="button"
-              class="weigh-action-btn weigh-action-btn--${action.tone}"
-              data-action="${action.id}"
-              data-step="${stepId}"
-              ${disabled ? "disabled" : ""}
-            >
-              <i class="fa-solid fa-circle-play"></i>
-              ${action.label}
-            </button>
-          `;
-        })
-        .join("")}
+            return `
+              <button
+                type="button"
+                class="weigh-action-btn weigh-action-btn--${action.tone}${highlight ? " weigh-action-btn--highlight" : ""}"
+                data-action="${action.id}"
+                data-step="${stepId}"
+                ${disabled ? "disabled" : ""}
+              >
+                <i class="fa-solid fa-circle-play"></i>
+                ${action.label}
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
     </div>
   `;
 }
@@ -676,18 +1141,20 @@ function renderScaleStep(stepId) {
   const scannedCode = stepData.scanCode || null;
   const hasScan = Boolean(scannedCode);
   const scaleAlert = weighState.scaleAlert;
+  const scanBoxClass = hasScan
+    ? "scan-box--success"
+    : scaleAlert === "mismatch"
+      ? "scan-box--error"
+      : "";
 
   return `
     <div class="weigh-step-body">
-      <div class="scan-box ${hasScan ? "scan-box--success" : ""}">
-        <i class="fa-solid fa-qrcode scan-box-icon"></i>
-        <p class="scan-status">${hasScan ? scannedCode : "รอสแกน QR"}</p>
-        <p class="scan-hint">${
-          hasScan
-            ? "เชื่อมต่อเครื่องชั่งสำเร็จ"
-            : "กดปุ่มด้านข้างเครื่องเพื่อสแกน"
-        }</p>
-      </div>
+      ${renderScanBoxButton({
+        scannedCode,
+        extraClass: scanBoxClass,
+        waitingHint: "แตะที่กรอบเพื่อเปิดกล้องสแกน QR",
+        successHint: "เชื่อมต่อเครื่องชั่งสำเร็จ",
+      })}
       ${
         scaleAlert === "mismatch"
           ? `<div class="scan-alert scan-alert--danger"><strong>QR ไม่ตรง</strong> — สแกน QR บนเครื่องชั่งใหม่อีกครั้ง</div>`
@@ -846,49 +1313,93 @@ function renderGrossStep(step) {
 }
 
 function renderQuantityStep(stepId) {
+  const scanLot = weighState.completedSteps[1]?.scanCode || "—";
+  const target = weighState.amount;
+  const unit = weighState.unit;
+  const draft = getStepDraft(stepId);
+  const currentQty = draft.quantity;
+  const hasError = weighState.quantityAlert === "incomplete";
+  const inputValue = currentQty != null ? currentQty : "";
+
   return `
-    <div class="weigh-step-body">
-      <label class="qty-label" for="weighQtyInput">จำนวนที่เบิก</label>
-      <input
-        type="number"
-        id="weighQtyInput"
-        class="qty-input"
-        min="0"
-        step="0.01"
-        value="${weighState.amount}"
-      />
-      <span class="qty-unit">${weighState.unit}</span>
-      <button type="button" class="weigh-next-btn" data-step="${stepId}" data-kind="quantity">
-        ยืนยันจำนวน
+    <div class="weigh-step-body weigh-step-body--quantity">
+      <div class="qty-lot-banner">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>Lot: ${scanLot}</span>
+      </div>
+      <div class="qty-target-row">
+        <span class="qty-target-label">จำนวน</span>
+        <span class="qty-target-value">เป้าหมาย ${formatQtyWithUnit(target, unit)}</span>
+      </div>
+      <div class="qty-panel ${hasError ? "qty-panel--error" : ""}">
+        <div class="qty-panel-main">
+          <p class="qty-panel-label">ค่าปัจจุบัน</p>
+          <input
+            type="number"
+            id="weighQtyInput"
+            class="qty-panel-input"
+            inputmode="numeric"
+            min="0"
+            step="1"
+            value="${inputValue}"
+            placeholder="—"
+            aria-label="จำนวนที่เบิก"
+          />
+          <p class="qty-panel-unit">${unit}</p>
+        </div>
+        <div class="qty-stepper">
+          <button
+            type="button"
+            class="qty-stepper-btn"
+            data-qty-step="up"
+            data-step="${stepId}"
+            aria-label="เพิ่มจำนวน"
+          >
+            <i class="fa-solid fa-chevron-up"></i>
+          </button>
+          <button
+            type="button"
+            class="qty-stepper-btn"
+            data-qty-step="down"
+            data-step="${stepId}"
+            aria-label="ลดจำนวน"
+          >
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="qty-full-btn"
+        data-step="${stepId}"
+        data-qty-full="${target}"
+      >
+        เต็มจำนวน (${formatQtyWithUnit(target, unit)})
+      </button>
+      ${
+        hasError
+          ? `<p class="qty-error-msg">จำนวนไม่ครบ — ต้องการ ${formatQtyWithUnit(target, unit)}</p>`
+          : ""
+      }
+      <button
+        type="button"
+        class="qty-save-btn weigh-next-btn"
+        data-step="${stepId}"
+        data-kind="quantity"
+      >
+        บันทึกจำนวน
       </button>
     </div>
   `;
 }
 
 function renderDoneStep(step) {
-  const data = weighState.completedSteps[step.id];
-  let summary = "";
-
-  if (data?.scanCode) summary = data.scanCode;
-  else if (data?.scale) summary = data.scale;
-  else if (data?.weight != null)
-    summary = `${formatWeighAmount(data.weight)} ${data.unit || weighState.unit}`;
-  else if (data?.quantity != null)
-    summary = `${formatWeighAmount(data.quantity)} ${weighState.unit}`;
-  else if (data?.actionLabel) summary = data.actionLabel;
-  else summary = "เสร็จสิ้น";
+  const summary = getStepSummaryText(step);
+  const variant = canEditStep(step.id) ? "editable" : "done";
 
   return `
     <div class="weigh-step weigh-step--done">
-      <div class="weigh-step-row">
-        <span class="weigh-step-num weigh-step-num--done">
-          <i class="fa-solid fa-check"></i>
-        </span>
-        <div class="weigh-step-summary">
-          <span class="weigh-step-title">${step.title}</span>
-          <span class="weigh-step-result">${summary}</span>
-        </div>
-      </div>
+      ${renderStepRow(step, { variant, summary })}
     </div>
   `;
 }
@@ -896,24 +1407,25 @@ function renderDoneStep(step) {
 function renderLockedStep(step) {
   return `
     <div class="weigh-step weigh-step--locked">
-      <div class="weigh-step-row">
-        <span class="weigh-step-num">${step.id}</span>
-        <span class="weigh-step-title">${step.title}</span>
-        <i class="fa-solid fa-lock weigh-step-lock"></i>
-      </div>
+      ${renderStepRow(step, { variant: "locked" })}
     </div>
   `;
 }
 
-function getScanStepAlertClass(step) {
-  if (step.kind !== "scan" || !weighState.scanAlert) return "";
+function getStepAlertClass(step) {
+  if (step.kind === "scan" && weighState.scanAlert) {
+    if (weighState.scanAlert === "no_stock") return "weigh-step--warn";
+    return "weigh-step--alert";
+  }
 
-  if (weighState.scanAlert === "no_stock") return "weigh-step--warn";
-  return "weigh-step--alert";
+  if (step.kind === "scale" && weighState.scaleAlert === "mismatch") {
+    return "weigh-step--alert";
+  }
+
+  return "";
 }
 
 function renderActiveStep(step) {
-  const workflow = getWorkflow(weighState.type);
   const stepData = weighState.completedSteps[step.id] || {};
   const scannedCode = stepData.scanCode || null;
 
@@ -935,19 +1447,14 @@ function renderActiveStep(step) {
     body = renderQuantityStep(step.id);
   }
 
-  const desc =
-    step.desc ||
-    (step.kind === "scan" && step.id === 1 ? workflow.scanDesc : "");
+  const summary = getStepSummaryText(step);
+  const desc = getStepDescription(step);
+  const rowSummary = step.kind === "scan" && !scannedCode ? "" : summary;
 
   return `
-    <div class="weigh-step weigh-step--active ${getScanStepAlertClass(step)}">
-      <div class="weigh-step-header">
-        <span class="weigh-step-num weigh-step-num--active">${step.id}</span>
-        <div>
-          <h4 class="weigh-step-title">${step.title}</h4>
-          ${desc ? `<p class="weigh-step-desc">${desc}</p>` : ""}
-        </div>
-      </div>
+    <div class="weigh-step weigh-step--active ${step.kind === "quantity" ? "weigh-step--quantity" : ""} ${getStepAlertClass(step)}">
+      ${renderStepRow(step, { variant: "active", summary: rowSummary })}
+      ${step.kind !== "quantity" && desc ? `<p class="weigh-step-desc weigh-step-desc--highlight">${desc}</p>` : ""}
       ${body}
     </div>
   `;
@@ -973,9 +1480,22 @@ function renderWeighSteps() {
 }
 
 function bindWeighStepEvents() {
+  document.querySelectorAll("[data-edit-step]").forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      reopenStep(Number(btn.dataset.editStep));
+    });
+  });
+
   document.querySelectorAll(".weigh-action-btn").forEach((btn) => {
     btn.addEventListener("click", (event) => {
       event.stopPropagation();
+
+      if (btn.dataset.stepAction === "scale_mismatch") {
+        weighState.scaleAlert = "mismatch";
+        renderWeighSteps();
+        return;
+      }
 
       const stepId = Number(btn.dataset.step);
       const actionId = btn.dataset.action;
@@ -997,12 +1517,15 @@ function bindWeighStepEvents() {
       }
 
       if (actionId === "no_stock") {
+        if (isApiValidatedScanStep(stepId)) return;
         weighState.scanAlert = "no_stock";
         weighState.stockAcknowledged = false;
       } else if (actionId === "mismatch") {
+        if (isApiValidatedScanStep(stepId)) return;
         weighState.scanAlert = "mismatch";
         weighState.stockAcknowledged = false;
       } else if (actionId === "expired") {
+        if (isApiValidatedScanStep(stepId)) return;
         weighState.scanAlert = "expired";
         weighState.stockAcknowledged = false;
       }
@@ -1013,8 +1536,18 @@ function bindWeighStepEvents() {
 
   document.querySelectorAll(".stock-continue-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      weighState.stockAcknowledged = true;
-      renderWeighSteps();
+      if (btn.disabled) return;
+
+      const stepId = Number(btn.dataset.step);
+      if (!canPassScanStep(stepId)) return;
+
+      const scanCode = weighState.completedSteps[stepId]?.scanCode?.trim();
+
+      completeStep(stepId, {
+        scanCode: scanCode || null,
+        actionLabel: "ดำเนินการต่อ",
+        alertType: "no_stock",
+      });
     });
   });
 
@@ -1022,6 +1555,10 @@ function bindWeighStepEvents() {
     btn.addEventListener("click", () => {
       weighState.scanAlert = null;
       weighState.stockAcknowledged = false;
+      if (weighState.type === "R" || weighState.type === "P") {
+        weighState.scanValidated = false;
+        weighState.scanInventory = null;
+      }
       renderWeighSteps();
     });
   });
@@ -1153,7 +1690,17 @@ function bindWeighStepEvents() {
       if (btn.dataset.kind === "quantity") {
         const qtyInput = document.getElementById("weighQtyInput");
         const quantity = Number(qtyInput?.value);
+        const target = weighState.amount;
+
         if (!quantity || quantity <= 0) return;
+
+        if (quantity !== target) {
+          weighState.quantityAlert = "incomplete";
+          renderWeighSteps();
+          return;
+        }
+
+        weighState.quantityAlert = null;
         completeStep(stepId, { quantity });
         return;
       }
@@ -1161,6 +1708,52 @@ function bindWeighStepEvents() {
       completeStep(stepId, { actionLabel: "ยืนยัน" });
     });
   });
+
+  document.querySelectorAll("[data-qty-full]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const stepId = Number(btn.dataset.step);
+      const draft = getStepDraft(stepId);
+      draft.quantity = Number(btn.dataset.qtyFull);
+      weighState.quantityAlert = null;
+      renderWeighSteps();
+    });
+  });
+
+  document.querySelectorAll("[data-qty-step]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const stepId = Number(btn.dataset.step);
+      const draft = getStepDraft(stepId);
+      let qty = Number(draft.quantity) || 0;
+
+      if (btn.dataset.qtyStep === "up") {
+        qty += 1;
+      } else {
+        qty = Math.max(0, qty - 1);
+      }
+
+      if (qty > 0) draft.quantity = qty;
+      else delete draft.quantity;
+
+      weighState.quantityAlert = null;
+      renderWeighSteps();
+    });
+  });
+
+  document
+    .getElementById("weighQtyInput")
+    ?.addEventListener("input", (event) => {
+      const stepId = weighState.currentStep;
+      const draft = getStepDraft(stepId);
+      const value = event.target.value;
+
+      if (value === "") {
+        delete draft.quantity;
+      } else {
+        draft.quantity = Number(value);
+      }
+
+      weighState.quantityAlert = null;
+    });
 }
 
 function handleScanInput(value) {
@@ -1169,9 +1762,17 @@ function handleScanInput(value) {
   const scanStep = getActiveScanStep();
   if (!scanStep) return;
 
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return;
+
+  if (isFirstMaterialScanStep(scanStep)) {
+    handleMaterialQrScan(trimmedValue);
+    return;
+  }
+
   weighState.completedSteps[scanStep.id] = {
     ...(weighState.completedSteps[scanStep.id] || {}),
-    scanCode: value.trim(),
+    scanCode: trimmedValue,
     locked: false,
   };
 
@@ -1203,16 +1804,33 @@ function initWeighingPanel() {
     closeSummaryPanel();
   });
 
+  document
+    .getElementById("pkgSummarySaveBtn")
+    ?.addEventListener("click", () => {
+      if (!validateSummaryInspector()) return;
+      closeSummaryPanel();
+    });
+
   document.getElementById("summaryPrintBtn")?.addEventListener("click", () => {
     if (!validateSummaryInspector()) return;
     showPrintPreviewPanel();
   });
 
-  document.getElementById("summaryInspector")?.addEventListener("change", () => {
-    if (document.getElementById("summaryInspector")?.value) {
-      clearSummaryInspectorError();
-    }
-  });
+  document
+    .getElementById("summaryInspector")
+    ?.addEventListener("change", () => {
+      if (document.getElementById("summaryInspector")?.value) {
+        clearSummaryInspectorError();
+      }
+    });
+
+  document
+    .getElementById("pkgSummaryInspector")
+    ?.addEventListener("change", () => {
+      if (document.getElementById("pkgSummaryInspector")?.value) {
+        clearSummaryInspectorError();
+      }
+    });
 
   document
     .getElementById("backFromPrintPreview")
@@ -1251,6 +1869,17 @@ function initWeighingPanel() {
   document.getElementById("weighPanel")?.addEventListener("click", (event) => {
     if (event.target.closest("button, input, select, textarea, label")) return;
     focusScanInput();
+  });
+
+  document.getElementById("weighSteps")?.addEventListener("click", (event) => {
+    const scanBtn = event.target.closest(".scan-box-btn");
+    if (!scanBtn) return;
+
+    event.stopPropagation();
+
+    if (!weighState || !getActiveScanStep() || weighState.scanLoading) return;
+
+    openQrScanner((value) => handleScanInput(value));
   });
 }
 

@@ -4,7 +4,7 @@ const AUTH_API_URL = "/api";
 const GUEST_ONLY_PAGES = new Set(["/", "/index.html"]);
 
 /** หน้าที่เข้าได้ทุกคน ไม่ตรวจ session */
-const PUBLIC_PAGES = new Set(["/404.html"]);
+const PUBLIC_PAGES = new Set(["/404.html", "/weight.html"]);
 
 /** หน้าที่ต้อง login — เพิ่ม path ของหน้าใหม่ที่นี่ */
 const PROTECTED_PAGES = new Set(["/main.html"]);

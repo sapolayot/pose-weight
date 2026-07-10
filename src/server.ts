@@ -3,14 +3,14 @@ import dotenv from "dotenv";
 import express, { Application, NextFunction, Request, Response } from "express";
 import session from "express-session";
 import path from "path";
-// import loginRoutes from "./routes/login.routes";
 import { pageAuthMiddleware } from "./middlewares/page-auth.middleware";
-import authRoutes from "./routes/auth.routes";
-import whStockTransmitIsoRoutes from "./routes/wh-stock-transmit-iso.routes";
+import routes from "./routes";
 
 import { testConnection } from "./config/database.config";
 
 dotenv.config();
+
+const HOST = process.env.HOST || "localhost";
 
 const PORT = process.env.PORT || 3000;
 
@@ -18,6 +18,8 @@ const app: Application = express();
 
 const allowedOrigins = [
   "http://localhost:3000",
+  // "https://2532-183-88-229-99.ngrok-free.app",
+  `${HOST}:${PORT}`,
   // "https://yourdomain.com"
 ];
 
@@ -67,9 +69,7 @@ app.get("/api/health", (req: Request, res: Response) => {
   });
 });
 
-// app.use("/api/login", loginRoutes);
-app.use("/api", authRoutes);
-app.use("/api", whStockTransmitIsoRoutes);
+app.use("/api", routes);
 
 /**
  * Page Auth Middleware (HTML pages)
@@ -116,7 +116,7 @@ async function startServer() {
   await testConnection();
   app.listen(PORT, () => {
     console.log("=================================");
-    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`Server running at ${HOST}:${PORT}`);
     console.log("=================================");
   });
 }

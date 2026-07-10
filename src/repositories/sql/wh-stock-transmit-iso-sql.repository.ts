@@ -23,10 +23,14 @@ interface WhStockTransmitIsoRow extends RowDataPacket {
 export default class WhStockTransmitIsoSqlRepository implements WhStockTransmitIsoRepository {
   async searchActive(
     query = "",
-    limit = 200,
+    limit = 10,
+    status?: number,
+    page = 1,
   ): Promise<WhStockTransmitIsoRecord[]> {
     const trimmedQuery = query.trim();
     const safeLimit = Math.min(Math.max(limit, 1), 200);
+    const safePage = Math.max(page, 1);
+    const offset = (safePage - 1) * safeLimit;
     const params: Array<string | number> = [];
 
     let sql = `
@@ -48,8 +52,15 @@ export default class WhStockTransmitIsoSqlRepository implements WhStockTransmitI
       FROM wh_stock_transmit_iso
       LEFT JOIN item_unit
         ON item_unit.Unit_Code = wh_stock_transmit_iso.Manufacturing_Unit
-      WHERE wh_stock_transmit_iso.Status = 0
+      WHERE 1 = 1
     `;
+
+    if (status === 0 || status === 1) {
+      sql += `
+        AND wh_stock_transmit_iso.Status = ?
+      `;
+      params.push(status);
+    }
 
     if (trimmedQuery) {
       sql += `
@@ -66,9 +77,9 @@ export default class WhStockTransmitIsoSqlRepository implements WhStockTransmitI
 
     sql += `
       ORDER BY wh_stock_transmit_iso.DocNo DESC
-      LIMIT ?
+      LIMIT ? OFFSET ?
     `;
-    params.push(safeLimit);
+    params.push(safeLimit, offset);
 
     const [rows] = await pool.query<WhStockTransmitIsoRow[]>(sql, params);
 

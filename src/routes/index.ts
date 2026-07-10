@@ -1,0 +1,15 @@
+import { Router } from "express";
+import authRoutes from "./auth.routes";
+import whInventoryRoutes from "./wh-inventory.routes";
+import whStockTransmitIsoSubRoutes from "./wh-stock-transmit-iso-sub.routes";
+import whStockTransmitIsoRoutes from "./wh-stock-transmit-iso.routes";
+
+const router = Router();
+
+// router.use("/login", loginRoutes);
+router.use(authRoutes);
+router.use(whStockTransmitIsoRoutes);
+router.use(whStockTransmitIsoSubRoutes);
+router.use(whInventoryRoutes);
+
+export default router;

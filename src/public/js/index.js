@@ -17,12 +17,38 @@ function hideLoginError() {
   errorBox.hidden = true;
 }
 
+function getLoginValidationError(username, password) {
+  const trimmedUsername = username.trim();
+
+  if (!trimmedUsername && !password) {
+    return "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน";
+  }
+  if (!trimmedUsername) {
+    return "กรุณากรอกชื่อผู้ใช้";
+  }
+  if (!password) {
+    return "กรุณากรอกรหัสผ่าน";
+  }
+
+  return null;
+}
+
 async function login() {
   hideLoginError();
 
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
+  const usernameInput = document.getElementById("username");
+  const passwordInput = document.getElementById("password");
+  const username = usernameInput?.value ?? "";
+  const password = passwordInput?.value ?? "";
   const rememberMe = document.getElementById("rememberMe")?.checked;
+
+  const validationError = getLoginValidationError(username, password);
+  if (validationError) {
+    showLoginError(validationError);
+    return;
+  }
+
+  const trimmedUsername = username.trim();
 
   try {
     const res = await fetch(`${API_URL}/login`, {
@@ -31,7 +57,7 @@ async function login() {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ username, password, rememberMe }),
+      body: JSON.stringify({ username: trimmedUsername, password, rememberMe }),
     });
 
     let data = {};
@@ -47,7 +73,7 @@ async function login() {
     }
 
     if (rememberMe) {
-      localStorage.setItem("rememberedUser", username);
+      localStorage.setItem("rememberedUser", trimmedUsername);
     } else {
       localStorage.removeItem("rememberedUser");
     }
@@ -69,7 +95,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const usernameInput = document.getElementById("username");
   const passwordInput = document.getElementById("password");
+
+  [usernameInput, passwordInput].forEach((input) => {
+    input?.addEventListener("input", hideLoginError);
+  });
   const toggleIcon = document.querySelector(".toggle-password");
 
   if (toggleIcon && passwordInput) {
