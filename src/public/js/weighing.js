@@ -296,7 +296,6 @@ function openWeighPanel({
 }
 
 function closeWeighPanel() {
-  closeQrScanner();
   clearScanTimer();
   scanBuffer = "";
   document.getElementById("scanInput")?.blur();
@@ -311,7 +310,6 @@ function hideSummaryPanels() {
 }
 
 function closeSummaryPanel() {
-  closeQrScanner();
   clearScanTimer();
   scanBuffer = "";
   document.getElementById("scanInput")?.blur();
@@ -1002,14 +1000,12 @@ function renderScanAlert(stepId) {
 function renderScanBoxButton({
   scannedCode,
   extraClass = "",
-  waitingHint = "แตะที่กรอบเพื่อเปิดกล้องสแกน QR",
   successHint = "สแกน QR/Barcode สำเร็จ",
   loading = false,
 }) {
   const hasScan = Boolean(scannedCode);
   const boxClass = [
     "scan-box",
-    "scan-box-btn",
     hasScan ? "scan-box--success" : "",
     loading ? "scan-box--loading" : "",
     extraClass,
@@ -1017,18 +1013,24 @@ function renderScanBoxButton({
     .filter(Boolean)
     .join(" ");
 
-  const hint = loading
+  const statusText = loading
     ? "กำลังตรวจสอบ QR..."
     : hasScan
+      ? scannedCode
+      : "รอสแกน QR";
+
+  const hint = loading
+    ? "กรุณารอสักครู่"
+    : hasScan
       ? successHint
-      : waitingHint;
+      : "กดปุ่มด้านข้างเครื่องเพื่อสแกน";
 
   return `
-    <button type="button" class="${boxClass}" aria-label="เปิดกล้องสแกน QR" ${loading ? "disabled" : ""}>
+    <div class="${boxClass}" aria-live="polite">
       <i class="fa-solid fa-qrcode scan-box-icon"></i>
-      <p class="scan-status">${hasScan ? scannedCode : "รอสแกน QR"}</p>
+      <p class="scan-status">${statusText}</p>
       <p class="scan-hint">${hint}</p>
-    </button>
+    </div>
   `;
 }
 
@@ -1152,7 +1154,6 @@ function renderScaleStep(stepId) {
       ${renderScanBoxButton({
         scannedCode,
         extraClass: scanBoxClass,
-        waitingHint: "แตะที่กรอบเพื่อเปิดกล้องสแกน QR",
         successHint: "เชื่อมต่อเครื่องชั่งสำเร็จ",
       })}
       ${
@@ -1869,17 +1870,6 @@ function initWeighingPanel() {
   document.getElementById("weighPanel")?.addEventListener("click", (event) => {
     if (event.target.closest("button, input, select, textarea, label")) return;
     focusScanInput();
-  });
-
-  document.getElementById("weighSteps")?.addEventListener("click", (event) => {
-    const scanBtn = event.target.closest(".scan-box-btn");
-    if (!scanBtn) return;
-
-    event.stopPropagation();
-
-    if (!weighState || !getActiveScanStep() || weighState.scanLoading) return;
-
-    openQrScanner((value) => handleScanInput(value));
   });
 }
 

@@ -94,7 +94,7 @@
               >
                 <i class="fa-solid fa-chevron-left"></i>
               </button>
-              <p class="withdraw-label"></p>
+              <p class="withdraw-label">เบิกเคมี และ บรรจุภัณฑ์</p>
               <h2 id="withdrawTitle"></h2>
               <p id="withdrawMeta"></p>
             </div>
@@ -152,25 +152,6 @@
             aria-hidden="true"
             tabindex="-1"
           />
-        </div>
-
-        <div id="qrScannerPanel" class="qr-scanner-panel" hidden>
-          <div class="qr-scanner-dialog" role="dialog" aria-modal="true" aria-labelledby="qrScannerTitle">
-            <div class="qr-scanner-header">
-              <h3 id="qrScannerTitle">สแกน QR</h3>
-              <button
-                type="button"
-                class="qr-scanner-close-btn"
-                id="closeQrScanner"
-                aria-label="ปิด"
-              >
-                <i class="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-            <div id="qrScannerViewport" class="qr-scanner-viewport"></div>
-            <p class="qr-scanner-hint">วาง QR ให้อยู่ในกรอบ — ใช้กล้องหลัง</p>
-            <p id="qrScannerError" class="qr-scanner-error" hidden></p>
-          </div>
         </div>
 
         <div id="summaryPanel" class="summary-panel">
@@ -478,11 +459,9 @@
       </div>
     </div>
 
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="./js/splash.js"></script>
     <script src="./js/auth.js"></script>
     <script src="./js/main.js"></script>
-    <script src="./js/qr-scanner.js"></script>
     <script src="./js/weighing.js"></script>
   </body>
 </html>

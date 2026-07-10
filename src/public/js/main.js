@@ -322,29 +322,77 @@ function mapRowToRound(row, roundNumber, unit, fallbackTotal) {
   };
 }
 
-function buildRoundsFromRows(rows, total, unit, withdrawn) {
+function getEffectiveTotal(first) {
+  const bomQty = Number(first.bomQty) || 0;
+  if (bomQty > 0) return bomQty;
+
+  const qtyImport = Number(first.qtyImport) || 0;
+  if (qtyImport > 0) return qtyImport;
+
+  return 0;
+}
+
+function getWithdrawnAmount(first) {
+  return Number(first.sumQty) || 0;
+}
+
+function resolveMaterialStatus(withdrawn, total, rounds) {
+  const hasDoneRounds = rounds?.some((round) => round.status === "done") ?? false;
+  const hasPendingRounds =
+    rounds?.some((round) => round.status === "pending") ?? false;
+
+  if (total > 0 && withdrawn >= total && !hasPendingRounds) {
+    return "completed";
+  }
+
+  if (withdrawn > 0 || hasDoneRounds) {
+    return "partial";
+  }
+
+  return "pending";
+}
+
+function appendPendingRoundIfNeeded(rounds, withdrawn, total, unit, itemCode) {
+  const remain = Math.max(total - withdrawn, 0);
+  if (remain <= 0) return rounds;
+  if (rounds.some((round) => round.status === "pending")) return rounds;
+
+  return [
+    ...rounds,
+    {
+      round: rounds.length + 1,
+      needed: remain,
+      itemCode,
+      unit,
+      status: "pending",
+    },
+  ];
+}
+
+function buildRoundsFromRows(rows, total, unit, withdrawn, itemCode) {
   const sorted = sortRowsById(rows);
   const doneRows = sorted.filter(
-    (row) => Number(row.status) === 1 && (Number(row.qtyTmp) > 0 || row.lotNo),
+    (row) => Number(row.status) === 1 && getRowAmount(row) > 0,
   );
 
   let rounds = doneRows.map((row, index) => ({
     round: index + 1,
     lot: row.lotNo || "",
     code: row.refCode || row.itemCode || "",
-    itemCode: row.itemCode || "",
+    itemCode: row.itemCode || itemCode || "",
     amount: getRowAmount(row),
     unit,
     status: "done",
   }));
 
   if (rounds.length === 0 && withdrawn > 0) {
+    const first = sorted[0];
     rounds = [
       {
         round: 1,
-        lot: sorted[0]?.lotNo || "",
-        code: sorted[0]?.refCode || sorted[0]?.itemCode || "",
-        itemCode: sorted[0]?.itemCode || "",
+        lot: first?.lotNo || "",
+        code: first?.refCode || first?.itemCode || "",
+        itemCode: first?.itemCode || itemCode || "",
         amount: withdrawn,
         unit,
         status: "done",
@@ -352,17 +400,7 @@ function buildRoundsFromRows(rows, total, unit, withdrawn) {
     ];
   }
 
-  const remain = Math.max(total - withdrawn, 0);
-  if (remain > 0) {
-    rounds.push({
-      round: rounds.length + 1,
-      needed: remain,
-      unit,
-      status: "pending",
-    });
-  }
-
-  return rounds;
+  return appendPendingRoundIfNeeded(rounds, withdrawn, total, unit, itemCode);
 }
 
 function buildMaterialItem(rows) {
@@ -370,65 +408,84 @@ function buildMaterialItem(rows) {
   const first = sorted[0];
   const name = first.barcode || "—";
   const code = first.refCode || first.itemCode || "";
+  const itemCode = first.itemCode || "";
   const unit = first.unitName || first.unitAltName || "—";
-  const total = first.bomQty ? Number(first.bomQty) : 0;
-  const effectiveTotal = total > 0 ? total : 0;
+  const total = getEffectiveTotal(first);
+  const withdrawn = getWithdrawnAmount(first);
 
   if (sorted.length > 1) {
-    const rounds = sorted.map((row, index) =>
-      mapRowToRound(row, index + 1, unit, effectiveTotal),
+    let rounds = sorted.map((row, index) =>
+      mapRowToRound(row, index + 1, unit, total),
     );
-    const withdrawn = first.sumQty ? Number(first.sumQty) : 0;
-    const allDone = rounds.every((row) => row.status === "done");
+    rounds = appendPendingRoundIfNeeded(
+      rounds,
+      withdrawn,
+      total,
+      unit,
+      itemCode,
+    );
 
     return {
       name,
       code,
-      itemCode: first.itemCode || "",
+      itemCode,
       withdrawn,
-      total: effectiveTotal,
+      total,
       unit,
-      status: allDone ? "completed" : "partial",
+      status: resolveMaterialStatus(withdrawn, total, rounds),
       rounds,
     };
   }
 
-  const withdrawn = Number(first.sumQty) || 0;
+  if (total > 0 && withdrawn >= total) {
+    const rounds = buildRoundsFromRows(
+      sorted,
+      total,
+      unit,
+      withdrawn,
+      itemCode,
+    ).filter((round) => round.status === "done");
 
-  if (effectiveTotal > 0 && withdrawn >= effectiveTotal) {
     return {
       name,
       code,
-      itemCode: first.itemCode || "",
+      itemCode,
       lot: first.lotNo || first.refCode || "",
-      withdrawn: effectiveTotal,
-      total: effectiveTotal,
+      withdrawn: total,
+      total,
       unit,
       status: "completed",
+      rounds: rounds.length > 0 ? rounds : undefined,
     };
   }
 
   if (withdrawn > 0) {
-    const allDone = sorted.every((row) => Number(row.status) === 1);
+    const rounds = buildRoundsFromRows(
+      sorted,
+      total,
+      unit,
+      withdrawn,
+      itemCode,
+    );
 
     return {
       name,
       code,
-      itemCode: first.itemCode || "",
+      itemCode,
       withdrawn,
-      total: effectiveTotal,
+      total,
       unit,
-      status: allDone ? "completed" : "partial",
-      rounds: buildRoundsFromRows(sorted, effectiveTotal, unit, withdrawn),
+      status: resolveMaterialStatus(withdrawn, total, rounds),
+      rounds,
     };
   }
 
   return {
     name,
     code,
-    itemCode: first.itemCode || "",
+    itemCode,
     withdrawn: 0,
-    total: effectiveTotal,
+    total,
     unit,
     status: "pending",
   };

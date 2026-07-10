@@ -843,26 +843,6 @@ button.weigh-step-status--edit {
   background-color: #f8fbff;
 }
 
-.scan-box-btn {
-  display: block;
-  width: 100%;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
-  appearance: none;
-  -webkit-appearance: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.scan-box-btn:focus-visible {
-  outline: 2px solid #5195cb;
-  outline-offset: 2px;
-}
-
-.scan-box-btn:active {
-  transform: scale(0.99);
-}
-
 .scan-box--success {
   border-color: #86efac;
   background-color: #f0fdf4;
@@ -1288,88 +1268,6 @@ button.weigh-step-status--edit {
   pointer-events: none;
   width: 0;
   height: 0;
-}
-
-/* --- QR Camera Scanner --- */
-.qr-scanner-panel {
-  position: fixed;
-  inset: 0;
-  z-index: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background-color: rgba(15, 23, 42, 0.72);
-}
-
-.qr-scanner-panel[hidden] {
-  display: none;
-}
-
-.qr-scanner-dialog {
-  width: min(100%, 360px);
-  background-color: #ffffff;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
-}
-
-.qr-scanner-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid #edf2f7;
-}
-
-.qr-scanner-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.qr-scanner-close-btn {
-  width: 34px;
-  height: 34px;
-  border: none;
-  border-radius: 50%;
-  background-color: #f1f5f9;
-  color: #64748b;
-  cursor: pointer;
-}
-
-.qr-scanner-viewport {
-  width: 100%;
-  min-height: 280px;
-  background-color: #0f172a;
-}
-
-.qr-scanner-viewport video {
-  width: 100% !important;
-  height: auto !important;
-  object-fit: cover;
-}
-
-.qr-scanner-hint {
-  margin: 0;
-  padding: 12px 16px 16px;
-  font-size: 12px;
-  color: #64748b;
-  text-align: center;
-}
-
-.qr-scanner-error {
-  margin: 0;
-  padding: 0 16px 16px;
-  font-size: 12px;
-  color: #dc2626;
-  text-align: center;
-}
-
-.qr-scanner-error[hidden] {
-  display: none;
 }
 
 /* --- Packaging Quantity Step --- */
