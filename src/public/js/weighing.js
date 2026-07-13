@@ -7,9 +7,7 @@ function isFirstMaterialScanStep(step) {
 }
 
 function isApiValidatedScanStep(stepId) {
-  return (
-    (weighState?.type === "R" || weighState?.type === "P") && stepId === 1
-  );
+  return (weighState?.type === "R" || weighState?.type === "P") && stepId === 1;
 }
 
 function isInventoryExpired(inventory) {
@@ -213,6 +211,7 @@ const NET_WEIGHT_TOLERANCE = 0.01;
 let weighState = null;
 let scanBuffer = "";
 let scanTimer = null;
+const SCAN_SUBMIT_DELAY_MS = 1000;
 
 function getMqttLiveWeight() {
   if (typeof MqttScale === "undefined") return null;
@@ -226,14 +225,19 @@ function hasLiveScaleWeight() {
 
 function isMqttWeightStepKind(kind) {
   return (
-    kind === "container" || kind === "tare" || kind === "net" || kind === "gross"
+    kind === "container" ||
+    kind === "tare" ||
+    kind === "net" ||
+    kind === "gross"
   );
 }
 
 function getActiveWeightStep() {
   if (!weighState) return null;
   const workflow = getWorkflow(weighState.type);
-  const step = workflow.steps.find((item) => item.id === weighState.currentStep);
+  const step = workflow.steps.find(
+    (item) => item.id === weighState.currentStep,
+  );
   if (!step || !isMqttWeightStepKind(step.kind)) return null;
   return step;
 }
@@ -266,7 +270,9 @@ function refreshMqttWeightPanel() {
 
   const draft = getStepDraft(step.id);
   const value = getDisplayWeightForStep(step, draft);
-  const panel = document.querySelector(".weigh-step--active .weight-panel-value");
+  const panel = document.querySelector(
+    ".weigh-step--active .weight-panel-value",
+  );
 
   if (!panel) return;
   panel.textContent = value != null ? formatWeighAmount(value) : "—";
@@ -442,10 +448,10 @@ function openWeighPanel({
 
   panel.classList.add("active");
 
-  if (!autoSkipScanStep()) {
-    renderWeighSteps();
-    focusScanInput();
-  }
+  // if (!autoSkipScanStep()) {
+  renderWeighSteps();
+  focusScanInput();
+  // }
 }
 
 function closeWeighPanel() {
@@ -658,6 +664,31 @@ function clearScanTimer() {
     clearTimeout(scanTimer);
     scanTimer = null;
   }
+}
+
+function flushScanBuffer() {
+  if (!weighState || !getActiveScanStep()) return;
+
+  const input = document.getElementById("scanInput");
+  const value = input?.value?.trim() || scanBuffer.trim();
+  if (!value) return;
+
+  handleScanInput(value);
+  scanBuffer = "";
+  if (input) input.value = "";
+}
+
+function updateScanPreview(value) {
+  const statusEl = document.querySelector(".weigh-step--active .scan-status");
+  if (!statusEl) return;
+
+  const trimmed = String(value ?? "").trim();
+  statusEl.textContent = trimmed || "รอสแกน QR";
+}
+
+function scheduleScanSubmit() {
+  clearScanTimer();
+  scanTimer = setTimeout(flushScanBuffer, SCAN_SUBMIT_DELAY_MS);
 }
 
 function getActiveScanStep() {
@@ -978,9 +1009,7 @@ function getExpectedGrossWeightFromParts() {
   const net = getNetStepWeight();
 
   if (container?.weight != null && net?.weight != null) {
-    return Number(
-      (Number(container.weight) + Number(net.weight)).toFixed(2),
-    );
+    return Number((Number(container.weight) + Number(net.weight)).toFixed(2));
   }
 
   return null;
@@ -1496,8 +1525,7 @@ function renderNetStep(step) {
     ? (draft.weight ?? getMockNetWeight())
     : getDisplayWeightForStep(step, draft);
   const targetLabel = `เป้าหมาย ${formatWeighAmount(target)} ${unit}`;
-  const canRecord =
-    !draft.recorded && canRecordNetWeight(liveWeight, target);
+  const canRecord = !draft.recorded && canRecordNetWeight(liveWeight, target);
 
   syncNetStepAlert(liveWeight, target, draft.recorded);
 
@@ -1535,8 +1563,7 @@ function renderGrossStep(step) {
   const value = draft.recorded
     ? (draft.weight ?? expected)
     : getDisplayWeightForStep(step, draft);
-  const canRecord =
-    !draft.recorded && canRecordNetWeight(liveWeight, expected);
+  const canRecord = !draft.recorded && canRecordNetWeight(liveWeight, expected);
 
   syncGrossStepAlert(liveWeight, expected, draft.recorded);
 
@@ -1929,10 +1956,7 @@ function bindWeighStepEvents() {
       }
 
       if (action === "pass") {
-        if (
-          (step.kind === "net" || step.kind === "gross") &&
-          !draft.recorded
-        ) {
+        if ((step.kind === "net" || step.kind === "gross") && !draft.recorded) {
           return;
         }
 
@@ -2118,29 +2142,34 @@ function initWeighingPanel() {
     window.print();
   });
 
+  scanInput?.addEventListener("input", (event) => {
+    if (!weighState || !getActiveScanStep()) return;
+
+    scanBuffer = event.target.value;
+    updateScanPreview(scanBuffer);
+    scheduleScanSubmit();
+  });
+
   scanInput?.addEventListener("keydown", (event) => {
     if (!weighState || !getActiveScanStep()) return;
 
     if (event.key === "Enter") {
       event.preventDefault();
-      if (scanBuffer.trim()) {
-        handleScanInput(scanBuffer.trim());
-        scanBuffer = "";
-        scanInput.value = "";
-      }
+      scanBuffer = event.target.value || scanBuffer;
+      updateScanPreview(scanBuffer);
+      scheduleScanSubmit();
       return;
     }
 
-    if (event.key.length === 1) {
+    if (
+      event.key.length === 1 &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey
+    ) {
       scanBuffer += event.key;
-      clearScanTimer();
-      scanTimer = setTimeout(() => {
-        if (scanBuffer.trim()) {
-          handleScanInput(scanBuffer.trim());
-          scanBuffer = "";
-          scanInput.value = "";
-        }
-      }, 120);
+      updateScanPreview(scanBuffer);
+      scheduleScanSubmit();
     }
   });
 
