@@ -6,7 +6,9 @@ import path from "path";
 import { pageAuthMiddleware } from "./middlewares/page-auth.middleware";
 import routes from "./routes";
 
+import swaggerUi from "swagger-ui-express";
 import { testConnection } from "./config/database.config";
+import { swaggerSpec } from "./config/swagger";
 
 dotenv.config();
 
@@ -69,6 +71,12 @@ app.get("/api/health", (req: Request, res: Response) => {
   });
 });
 
+app.get("/api/swagger.json", (_req: Request, res: Response) => {
+  res.json(swaggerSpec);
+});
+
+app.use("/api/swagger", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use("/api", routes);
 
 /**
@@ -117,6 +125,7 @@ async function startServer() {
   app.listen(PORT, () => {
     console.log("=================================");
     console.log(`Server running at ${HOST}:${PORT}`);
+    console.log(`Swagger UI at ${HOST}:${PORT}/api/swagger`);
     console.log("=================================");
   });
 }
