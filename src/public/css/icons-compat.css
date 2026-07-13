@@ -1,0 +1,44 @@
+/* Font Awesome fixes for Android 9 WebView (Chrome ~69) */
+.fa,
+.fa-solid,
+.fa-regular,
+.fa-brands,
+.fas,
+.far,
+.fab {
+  display: inline-block;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.fa-solid,
+.fas {
+  font-weight: 900;
+}
+
+.fa-regular,
+.far {
+  font-weight: 400;
+}
+
+.input-icon,
+.search-icon,
+.toggle-password,
+.scan-box-icon,
+.login-error-icon i,
+.material-icon i,
+.item-icon i,
+.print-btn i,
+.logout-btn i,
+.panel-close-btn i,
+.back-btn i,
+.step-status i,
+.scan-box i,
+.qty-stepper-btn i {
+  speak: none;
+  text-transform: none;
+}

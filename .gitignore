@@ -5,6 +5,9 @@ node_modules/
 dist/
 build/
 
+# Generated vendor assets (copied on npm install / build)
+src/public/vendor/
+
 # TypeScript cache
 *.tsbuildinfo
 
