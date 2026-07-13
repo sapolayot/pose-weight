@@ -211,7 +211,7 @@ const NET_WEIGHT_TOLERANCE = 0.01;
 let weighState = null;
 let scanBuffer = "";
 let scanTimer = null;
-const SCAN_SUBMIT_DELAY_MS = 1000;
+const SCAN_SUBMIT_DELAY_MS = 500;
 
 function getMqttLiveWeight() {
   if (typeof MqttScale === "undefined") return null;
