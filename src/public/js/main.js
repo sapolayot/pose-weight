@@ -267,7 +267,7 @@ function sortRowsById(rows) {
 }
 
 function getMaterialGroupKey(row) {
-  return `${row.itemCode ?? ""}\0${row.docNo ?? ""}\0${row.refCode ?? ""}`;
+  return `${row.itemCode ?? ""}\0${row.docNo ?? ""}\0${row.barCode ?? ""}`;
 }
 
 function groupRowsByMaterialKey(rows) {
@@ -337,7 +337,8 @@ function getWithdrawnAmount(first) {
 }
 
 function resolveMaterialStatus(withdrawn, total, rounds) {
-  const hasDoneRounds = rounds?.some((round) => round.status === "done") ?? false;
+  const hasDoneRounds =
+    rounds?.some((round) => round.status === "done") ?? false;
   const hasPendingRounds =
     rounds?.some((round) => round.status === "pending") ?? false;
 
