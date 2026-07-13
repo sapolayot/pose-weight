@@ -6,8 +6,16 @@ function isFirstMaterialScanStep(step) {
   );
 }
 
+function isScaleScanStep(step) {
+  return weighState?.type === "R" && step?.kind === "scale";
+}
+
 function isApiValidatedScanStep(stepId) {
   return (weighState?.type === "R" || weighState?.type === "P") && stepId === 1;
+}
+
+function isApiValidatedScaleStep(stepId) {
+  return weighState?.type === "R" && stepId === 2;
 }
 
 function isInventoryExpired(inventory) {
@@ -42,6 +50,13 @@ function getScanDisplayCode(stepId, scannedCode) {
   return scannedCode;
 }
 
+function getScaleDisplayCode(scannedCode) {
+  if (weighState?.scaleMachine?.machineName) {
+    return weighState.scaleMachine.machineName;
+  }
+  return scannedCode;
+}
+
 function getScanHighlightAction(stepId) {
   if (!isApiValidatedScanStep(stepId) || !weighState.scanValidated) {
     return null;
@@ -53,6 +68,12 @@ function getScanHighlightAction(stepId) {
 function isScanActionDisabled(action, stepId) {
   if (isApiValidatedScanStep(stepId)) {
     if (!weighState.scanValidated || weighState.scanLoading) return true;
+    if (action.id === "pass") return !canPassScanStep(stepId);
+    return true;
+  }
+
+  if (isApiValidatedScaleStep(stepId)) {
+    if (!weighState.scaleValidated || weighState.scaleLoading) return true;
     if (action.id === "pass") return !canPassScanStep(stepId);
     return true;
   }
@@ -134,6 +155,59 @@ async function handleMaterialQrScan(invCode) {
   }
 }
 
+async function fetchWeighingMachineByQrCode(qrCode) {
+  const response = await fetch(
+    `${API_URL}/weighing-machine/${encodeURIComponent(qrCode)}`,
+    { credentials: "include" },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to validate scale QR code");
+  }
+
+  return response.json();
+}
+
+async function handleScaleQrScan(qrCode) {
+  const stepId = 2;
+
+  weighState.scaleAlert = null;
+  weighState.scaleValidated = false;
+  weighState.scaleMachine = null;
+  weighState.scaleLoading = true;
+  weighState.completedSteps[stepId] = {
+    ...(weighState.completedSteps[stepId] || {}),
+    scanCode: qrCode,
+    locked: false,
+  };
+
+  renderWeighSteps();
+
+  try {
+    const payload = await fetchWeighingMachineByQrCode(qrCode);
+    const machine = Array.isArray(payload.data) ? payload.data[0] : null;
+
+    if (!payload.success || !machine) {
+      weighState.scaleAlert = "mismatch";
+      weighState.scaleValidated = true;
+      return;
+    }
+
+    weighState.scaleMachine = machine;
+    weighState.scaleAlert = null;
+    weighState.scaleValidated = true;
+    weighState.completedSteps[stepId].scanCode = machine.machineName || qrCode;
+  } catch (error) {
+    console.error(error);
+    weighState.scaleAlert = "mismatch";
+    weighState.scaleValidated = true;
+  } finally {
+    weighState.scaleLoading = false;
+    renderWeighSteps();
+    focusScanInput();
+  }
+}
+
 const WEIGH_WORKFLOWS = {
   R: {
     label: "ชั่งน้ำหนักเคมี",
@@ -197,11 +271,6 @@ const WEIGH_WORKFLOWS = {
     ],
   },
 };
-
-const SCALE_OPTIONS = [
-  { id: "PB-BL03.3", label: "PB-BL03.3 (6kg)" },
-  { id: "PB-BL04.3", label: "PB-BL04.3 (60kg)" },
-];
 
 // เปิด true เพื่อข้าม step สแกน QR (เคมี/บรรจุภัณฑ์) อัตโนมัติ
 const WEIGH_SKIP_SCAN_STEP = true;
@@ -431,6 +500,9 @@ function openWeighPanel({
     scanValidated: false,
     scanInventory: null,
     scanLoading: false,
+    scaleValidated: false,
+    scaleMachine: null,
+    scaleLoading: false,
   };
 
   scanBuffer = "";
@@ -760,25 +832,20 @@ function reopenStep(stepId) {
   weighState.scanValidated = false;
   weighState.scanInventory = null;
   weighState.scanLoading = false;
+  weighState.scaleValidated = false;
+  weighState.scaleMachine = null;
+  weighState.scaleLoading = false;
 
   renderWeighSteps();
   focusScanInput();
-}
-
-function getScaleSummary(scaleId) {
-  const maxMap = {
-    "PB-BL03.3": "6 kg",
-    "PB-BL04.3": "60 kg",
-  };
-
-  return `${scaleId} · Max ${maxMap[scaleId] || scaleId}`;
 }
 
 function getStepSummaryText(step) {
   const data = weighState.completedSteps[step.id] || {};
   const draft = weighState.stepDraft[step.id] || {};
 
-  if (data.scale) return getScaleSummary(data.scale);
+  if (data.machineName) return data.machineName;
+  if (data.scale && data.scanCode) return data.scanCode;
   if (data.scanCode) return data.scanCode;
   if (data.quantity != null) {
     return `${formatWeighAmount(data.quantity)} ${weighState.unit}`;
@@ -967,6 +1034,9 @@ function completeStep(stepId, result = {}) {
   weighState.stepAlert = null;
   weighState.quantityAlert = null;
   weighState.stockAcknowledged = false;
+  weighState.scaleValidated = false;
+  weighState.scaleMachine = null;
+  weighState.scaleLoading = false;
 
   if (result.scale) {
     MqttScale?.setActiveScale(result.scale);
@@ -1176,6 +1246,14 @@ function showSummaryPanel() {
 function canPassScanStep(stepId) {
   const stepData = weighState.completedSteps[stepId] || {};
   if (!stepData.scanCode?.trim()) return false;
+
+  if (isApiValidatedScaleStep(stepId)) {
+    return (
+      weighState.scaleValidated &&
+      !weighState.scaleLoading &&
+      weighState.scaleAlert === null
+    );
+  }
 
   if (isApiValidatedScanStep(stepId)) {
     return (
@@ -1410,20 +1488,23 @@ function getStepAlertMessage() {
 
 function renderScaleStep(stepId) {
   const stepData = weighState.completedSteps[stepId] || {};
-  const scannedCode = stepData.scanCode || null;
-  const hasScan = Boolean(scannedCode);
+  const displayCode = getScaleDisplayCode(stepData.scanCode || null);
+  const hasScan = Boolean(displayCode);
   const scaleAlert = weighState.scaleAlert;
-  const scanBoxClass = hasScan
-    ? "scan-box--success"
-    : scaleAlert === "mismatch"
-      ? "scan-box--error"
-      : "";
+  const scanBoxClass =
+    hasScan && weighState.scaleValidated && !scaleAlert
+      ? "scan-box--success"
+      : scaleAlert === "mismatch"
+        ? "scan-box--error"
+        : "";
+  const passDisabled = isScanActionDisabled({ id: "pass" }, stepId);
 
   return `
     <div class="weigh-step-body">
       ${renderScanBoxButton({
-        scannedCode,
+        scannedCode: displayCode,
         extraClass: scanBoxClass,
+        loading: weighState.scaleLoading,
         successHint: "เชื่อมต่อเครื่องชั่งสำเร็จ",
       })}
       ${
@@ -1432,24 +1513,22 @@ function renderScaleStep(stepId) {
           : ""
       }
       <div class="weigh-actions weigh-actions--scale">
-        ${SCALE_OPTIONS.map(
-          (scale) => `
-            <button
-              type="button"
-              class="weigh-action-btn weigh-action-btn--scale"
-              data-scale="${scale.id}"
-              data-step="${stepId}"
-            >
-              <i class="fa-solid fa-circle-play"></i>
-              ${scale.label}
-            </button>
-          `,
-        ).join("")}
         <button
           type="button"
-          class="weigh-action-btn weigh-action-btn--danger"
+          class="weigh-action-btn weigh-action-btn--neutral${!passDisabled && weighState.scaleValidated && !scaleAlert ? " weigh-action-btn--highlight" : ""}"
+          data-action="pass"
+          data-step="${stepId}"
+          ${passDisabled ? "disabled" : ""}
+        >
+          <i class="fa-solid fa-circle-play"></i>
+          ผ่าน
+        </button>
+        <button
+          type="button"
+          class="weigh-action-btn weigh-action-btn--danger${scaleAlert === "mismatch" ? " weigh-action-btn--highlight" : ""}"
           data-step-action="scale_mismatch"
           data-step="${stepId}"
+          disabled
         >
           <i class="fa-solid fa-circle-play"></i>
           QR ไม่ตรง
@@ -1738,7 +1817,14 @@ function renderActiveStep(step) {
 
   const summary = getStepSummaryText(step);
   const desc = getStepDescription(step);
-  const rowSummary = step.kind === "scan" && !scannedCode ? "" : summary;
+  const rowSummary =
+    (step.kind === "scan" && !scannedCode) ||
+    (step.kind === "scale" &&
+      !getScaleDisplayCode(
+        weighState.completedSteps[step.id]?.scanCode || null,
+      ))
+      ? ""
+      : summary;
 
   return `
     <div class="weigh-step weigh-step--active ${step.kind === "quantity" ? "weigh-step--quantity" : ""} ${getStepAlertClass(step)}">
@@ -1797,6 +1883,17 @@ function bindWeighStepEvents() {
         if (!canPassScanStep(stepId)) return;
 
         const scanCode = weighState.completedSteps[stepId]?.scanCode?.trim();
+        if (isApiValidatedScaleStep(stepId)) {
+          const machine = weighState.scaleMachine;
+          completeStep(stepId, {
+            scanCode: machine?.machineName || scanCode || null,
+            machineName: machine?.machineName || null,
+            scale: machine?.qrCode || null,
+            scaleId: machine?.id ?? null,
+          });
+          return;
+        }
+
         completeStep(stepId, {
           scanCode: scanCode || null,
           actionLabel: action.label,
@@ -1851,16 +1948,6 @@ function bindWeighStepEvents() {
       renderWeighSteps();
     });
   });
-
-  document
-    .querySelectorAll(".scale-option-btn, .weigh-action-btn[data-scale]")
-    .forEach((btn) => {
-      btn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        weighState.scaleAlert = null;
-        completeStep(Number(btn.dataset.step), { scale: btn.dataset.scale });
-      });
-    });
 
   document.querySelectorAll(".weigh-record-btn").forEach((btn) => {
     btn.addEventListener("click", (event) => {
@@ -2069,22 +2156,16 @@ function handleScanInput(value) {
     return;
   }
 
+  if (isScaleScanStep(scanStep)) {
+    handleScaleQrScan(trimmedValue);
+    return;
+  }
+
   weighState.completedSteps[scanStep.id] = {
     ...(weighState.completedSteps[scanStep.id] || {}),
     scanCode: trimmedValue,
     locked: false,
   };
-
-  if (scanStep.kind === "scale") {
-    const matchedScale = SCALE_OPTIONS.find(
-      (scale) =>
-        value.trim().includes(scale.id) || scale.id.includes(value.trim()),
-    );
-    if (matchedScale) {
-      weighState.scaleAlert = null;
-      MqttScale?.setActiveScale(matchedScale.id);
-    }
-  }
 
   renderWeighSteps();
   focusScanInput();
