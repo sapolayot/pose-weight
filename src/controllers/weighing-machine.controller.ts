@@ -9,7 +9,7 @@ export async function getList(req: Request, res: Response, next: NextFunction) {
 
     res.json({
       success: true,
-      message: "Product list loaded",
+      message: "Weighing machine list loaded",
       data,
     });
   } catch (err) {
