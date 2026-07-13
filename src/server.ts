@@ -8,7 +8,7 @@ import routes from "./routes";
 
 import swaggerUi from "swagger-ui-express";
 import { testConnection } from "./config/database.config";
-import { swaggerSpec } from "./config/swagger";
+import { buildSwaggerSpec } from "./config/swagger";
 
 dotenv.config();
 
@@ -71,13 +71,21 @@ app.get("/api/health", (req: Request, res: Response) => {
   });
 });
 
+app.use("/api", routes);
+
 app.get("/api/swagger.json", (_req: Request, res: Response) => {
-  res.json(swaggerSpec);
+  res.json(buildSwaggerSpec(app));
 });
 
-app.use("/api/swagger", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-app.use("/api", routes);
+app.use(
+  "/api/swagger",
+  swaggerUi.serve,
+  swaggerUi.setup(undefined, {
+    swaggerOptions: {
+      url: "/api/swagger.json",
+    },
+  }),
+);
 
 /**
  * Page Auth Middleware (HTML pages)
