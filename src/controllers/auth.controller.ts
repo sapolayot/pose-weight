@@ -17,7 +17,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     req.session.user = user;
 
     if (req.body.rememberMe) {
-      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30;
+      req.session.cookie.maxAge = 1000 * 60 * 60 * 24;
     } else {
       req.session.cookie.maxAge = undefined;
     }
