@@ -2090,8 +2090,57 @@ function handleScanInput(value) {
   focusScanInput();
 }
 
+async function fetchCoaApproveList() {
+  const response = await fetch(`${API_URL}/coa-approve`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to load coa approve list");
+  }
+
+  const payload = await response.json();
+  return Array.isArray(payload.data) ? payload.data : [];
+}
+
+function populateInspectorSelect(select, list) {
+  if (!select) return;
+
+  const placeholder = select.querySelector('option[value=""]');
+  select.innerHTML = "";
+  if (placeholder) {
+    select.appendChild(placeholder);
+  } else {
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = "เลือกผู้ตรวจสอบ...";
+    select.appendChild(defaultOption);
+  }
+
+  list.forEach((item) => {
+    const option = document.createElement("option");
+    option.value = String(item.id ?? "");
+    option.textContent = item.fNameTh || item.fName || "—";
+    select.appendChild(option);
+  });
+}
+
+async function loadCoaApproveInspectors() {
+  const selectIds = ["summaryInspector", "pkgSummaryInspector"];
+
+  try {
+    const list = await fetchCoaApproveList();
+    selectIds.forEach((id) => {
+      populateInspectorSelect(document.getElementById(id), list);
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 function initWeighingPanel() {
   initMqttScaleIntegration();
+  loadCoaApproveInspectors();
 
   const scanInput = document.getElementById("scanInput");
   const closeBtn = document.getElementById("closeWeighPanel");
