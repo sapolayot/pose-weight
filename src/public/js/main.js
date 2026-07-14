@@ -6,14 +6,15 @@ const DAYS_GREETING = [
   "\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35\u0E27\u0E31\u0E19\u0E1E\u0E38\u0E18",
   "\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35\u0E27\u0E31\u0E19\u0E1E\u0E24\u0E2B\u0E31\u0E2A\u0E1A\u0E14\u0E35",
   "\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35\u0E27\u0E31\u0E19\u0E28\u0E38\u0E01\u0E23\u0E4C",
-  "\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35\u0E27\u0E31\u0E19\u0E40\u0E2A\u0E32\u0E23\u0E4C"
+  "\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35\u0E27\u0E31\u0E19\u0E40\u0E2A\u0E32\u0E23\u0E4C",
 ];
 function setWelcomeText(user) {
   var _a;
   const welcomeEl = document.getElementById("welcome-text");
   if (!welcomeEl) return;
-  const greeting = DAYS_GREETING[(/* @__PURE__ */ new Date()).getDay()];
-  const firstName = (_a = user == null ? void 0 : user.firstName) == null ? void 0 : _a.trim();
+  const greeting = DAYS_GREETING[/* @__PURE__ */ new Date().getDay()];
+  const firstName =
+    (_a = user == null ? void 0 : user.firstName) == null ? void 0 : _a.trim();
   welcomeEl.textContent = firstName ? `${greeting}, ${firstName}` : greeting;
 }
 function initWelcomeText() {
@@ -26,17 +27,19 @@ function initWelcomeText() {
     (event) => {
       setWelcomeText(event.detail);
     },
-    { once: true }
+    { once: true },
   );
 }
 let withdrawMaterialsCache = null;
 async function logout() {
   try {
-    const proceed = confirm("\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E23\u0E30\u0E1A\u0E1A?");
+    const proceed = confirm(
+      "\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E23\u0E30\u0E1A\u0E1A?",
+    );
     if (proceed) {
       await fetch(`${API_URL}/logout`, {
         method: "POST",
-        credentials: "include"
+        credentials: "include",
       });
       window.location.href = "/";
     }
@@ -47,7 +50,7 @@ async function logout() {
 function formatAmount(value) {
   return Number(value).toLocaleString("en-US", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   });
 }
 function countCompleted(items) {
@@ -57,13 +60,16 @@ function renderPrintButton() {
   return `<button class="print-btn" type="button" aria-label="\u0E1E\u0E34\u0E21\u0E1E\u0E4C"><i class="fa-solid fa-print"></i></button>`;
 }
 function renderRoundItems(item, type, { showPending = true } = {}) {
-  return (item.rounds || []).map((round) => {
-    if (round.status === "done") {
-      const detailLines = [
-        round.lot ? `Lot: ${round.lot}` : "",
-        round.code ? `\u0E23\u0E2B\u0E31\u0E2A\u0E04\u0E38\u0E21: ${round.code}` : ""
-      ].filter(Boolean);
-      return `
+  return (item.rounds || [])
+    .map((round) => {
+      if (round.status === "done") {
+        const detailLines = [
+          round.lot ? `Lot: ${round.lot}` : "",
+          round.code
+            ? `\u0E23\u0E2B\u0E31\u0E2A\u0E04\u0E38\u0E21: ${round.code}`
+            : "",
+        ].filter(Boolean);
+        return `
           <div
             class="round-item round-item--done"
             data-type="${type}"
@@ -83,9 +89,9 @@ function renderRoundItems(item, type, { showPending = true } = {}) {
             ${renderPrintButton()}
           </div>
         `;
-    }
-    if (!showPending) return "";
-    return `
+      }
+      if (!showPending) return "";
+      return `
         <div class="round-item round-item--pending">
           <span class="round-dot round-dot--yellow"></span>
           <div class="round-info">
@@ -105,20 +111,28 @@ function renderRoundItems(item, type, { showPending = true } = {}) {
           >\u0E0A\u0E31\u0E48\u0E07\u0E23\u0E2D\u0E1A ${round.round}</button>
         </div>
       `;
-  }).filter(Boolean).join("");
+    })
+    .filter(Boolean)
+    .join("");
 }
 function renderCompletedCard(item, type) {
   var _a;
   const hasRounds = ((_a = item.rounds) == null ? void 0 : _a.length) > 0;
   const detailLines = [];
   if (item.code) {
-    detailLines.push(`\u0E23\u0E2B\u0E31\u0E2A\u0E04\u0E38\u0E21: ${item.code}`);
+    detailLines.push(
+      `\u0E23\u0E2B\u0E31\u0E2A\u0E04\u0E38\u0E21: ${item.code}`,
+    );
   }
   if (!hasRounds && item.lot) {
     detailLines.push(`Lot: ${item.lot}`);
   }
-  const roundsHtml = hasRounds ? `<div class="material-rounds">${renderRoundItems(item, type, { showPending: false })}</div>` : "";
-  const cardClass = hasRounds ? "material-card material-card--completed material-card--completed-rounds" : "material-card material-card--completed";
+  const roundsHtml = hasRounds
+    ? `<div class="material-rounds">${renderRoundItems(item, type, { showPending: false })}</div>`
+    : "";
+  const cardClass = hasRounds
+    ? "material-card material-card--completed material-card--completed-rounds"
+    : "material-card material-card--completed";
   return `
     <div
       class="${cardClass}"
@@ -214,12 +228,21 @@ function compareRowId(a, b) {
   var _a, _b;
   const aNum = Number(a.id);
   const bNum = Number(b.id);
-  if (Number.isFinite(aNum) && Number.isFinite(bNum) && String(a.id).trim() !== "" && String(b.id).trim() !== "") {
+  if (
+    Number.isFinite(aNum) &&
+    Number.isFinite(bNum) &&
+    String(a.id).trim() !== "" &&
+    String(b.id).trim() !== ""
+  ) {
     return aNum - bNum;
   }
-  return String((_a = a.id) != null ? _a : "").localeCompare(String((_b = b.id) != null ? _b : ""), void 0, {
-    numeric: true
-  });
+  return String((_a = a.id) != null ? _a : "").localeCompare(
+    String((_b = b.id) != null ? _b : ""),
+    void 0,
+    {
+      numeric: true,
+    },
+  );
 }
 function sortRowsById(rows) {
   return [...rows].sort(compareRowId);
@@ -260,7 +283,7 @@ function mapRowToRound(row, roundNumber, unit, fallbackTotal) {
       itemCode: row.itemCode || "",
       amount: getRowAmount(row),
       unit,
-      status: "done"
+      status: "done",
     };
   }
   return {
@@ -268,7 +291,7 @@ function mapRowToRound(row, roundNumber, unit, fallbackTotal) {
     needed: getRowNeeded(row, fallbackTotal),
     itemCode: row.itemCode || "",
     unit,
-    status: "pending"
+    status: "pending",
   };
 }
 function getEffectiveTotal(first) {
@@ -283,8 +306,20 @@ function getWithdrawnAmount(first) {
 }
 function resolveMaterialStatus(withdrawn, total, rounds) {
   var _a, _b;
-  const hasDoneRounds = (_a = rounds == null ? void 0 : rounds.some((round) => round.status === "done")) != null ? _a : false;
-  const hasPendingRounds = (_b = rounds == null ? void 0 : rounds.some((round) => round.status === "pending")) != null ? _b : false;
+  const hasDoneRounds =
+    (_a =
+      rounds == null
+        ? void 0
+        : rounds.some((round) => round.status === "done")) != null
+      ? _a
+      : false;
+  const hasPendingRounds =
+    (_b =
+      rounds == null
+        ? void 0
+        : rounds.some((round) => round.status === "pending")) != null
+      ? _b
+      : false;
   if (total > 0 && withdrawn >= total && !hasPendingRounds) {
     return "completed";
   }
@@ -304,14 +339,14 @@ function appendPendingRoundIfNeeded(rounds, withdrawn, total, unit, itemCode) {
       needed: remain,
       itemCode,
       unit,
-      status: "pending"
-    }
+      status: "pending",
+    },
   ];
 }
 function buildRoundsFromRows(rows, total, unit, withdrawn, itemCode) {
   const sorted = sortRowsById(rows);
   const doneRows = sorted.filter(
-    (row) => Number(row.status) === 1 && getRowAmount(row) > 0
+    (row) => Number(row.status) === 1 && getRowAmount(row) > 0,
   );
   let rounds = doneRows.map((row, index) => ({
     round: index + 1,
@@ -320,7 +355,7 @@ function buildRoundsFromRows(rows, total, unit, withdrawn, itemCode) {
     itemCode: row.itemCode || itemCode || "",
     amount: getRowAmount(row),
     unit,
-    status: "done"
+    status: "done",
   }));
   if (rounds.length === 0 && withdrawn > 0) {
     const first = sorted[0];
@@ -328,12 +363,15 @@ function buildRoundsFromRows(rows, total, unit, withdrawn, itemCode) {
       {
         round: 1,
         lot: (first == null ? void 0 : first.lotNo) || "",
-        code: (first == null ? void 0 : first.refCode) || (first == null ? void 0 : first.itemCode) || "",
+        code:
+          (first == null ? void 0 : first.refCode) ||
+          (first == null ? void 0 : first.itemCode) ||
+          "",
         itemCode: (first == null ? void 0 : first.itemCode) || itemCode || "",
         amount: withdrawn,
         unit,
-        status: "done"
-      }
+        status: "done",
+      },
     ];
   }
   return appendPendingRoundIfNeeded(rounds, withdrawn, total, unit, itemCode);
@@ -341,22 +379,23 @@ function buildRoundsFromRows(rows, total, unit, withdrawn, itemCode) {
 function buildMaterialItem(rows) {
   const sorted = sortRowsById(rows);
   const first = sorted[0];
-  const name = first.barcode || "\u2014";
+  const name =
+    first.prefixName === "(P)" ? first.nameTh || "" : first.barcode || "\u2014";
   const code = first.refCode || first.itemCode || "";
   const itemCode = first.itemCode || "";
   const unit = first.unitName || first.unitAltName || "\u2014";
   const total = getEffectiveTotal(first);
   const withdrawn = getWithdrawnAmount(first);
   if (sorted.length > 1) {
-    let rounds = sorted.map(
-      (row, index) => mapRowToRound(row, index + 1, unit, total)
+    let rounds = sorted.map((row, index) =>
+      mapRowToRound(row, index + 1, unit, total),
     );
     rounds = appendPendingRoundIfNeeded(
       rounds,
       withdrawn,
       total,
       unit,
-      itemCode
+      itemCode,
     );
     return {
       name,
@@ -366,7 +405,7 @@ function buildMaterialItem(rows) {
       total,
       unit,
       status: resolveMaterialStatus(withdrawn, total, rounds),
-      rounds
+      rounds,
     };
   }
   if (total > 0 && withdrawn >= total) {
@@ -375,7 +414,7 @@ function buildMaterialItem(rows) {
       total,
       unit,
       withdrawn,
-      itemCode
+      itemCode,
     ).filter((round) => round.status === "done");
     return {
       name,
@@ -386,7 +425,7 @@ function buildMaterialItem(rows) {
       total,
       unit,
       status: "completed",
-      rounds: rounds.length > 0 ? rounds : void 0
+      rounds: rounds.length > 0 ? rounds : void 0,
     };
   }
   if (withdrawn > 0) {
@@ -395,7 +434,7 @@ function buildMaterialItem(rows) {
       total,
       unit,
       withdrawn,
-      itemCode
+      itemCode,
     );
     return {
       name,
@@ -405,7 +444,7 @@ function buildMaterialItem(rows) {
       total,
       unit,
       status: resolveMaterialStatus(withdrawn, total, rounds),
-      rounds
+      rounds,
     };
   }
   return {
@@ -415,7 +454,7 @@ function buildMaterialItem(rows) {
     withdrawn: 0,
     total,
     unit,
-    status: "pending"
+    status: "pending",
   };
 }
 function mapSubItemsToMaterials(apiRows) {
@@ -423,17 +462,17 @@ function mapSubItemsToMaterials(apiRows) {
   const packagingRows = apiRows.filter((row) => Number(row.grp1) !== 2);
   return {
     chemical: Array.from(groupRowsByMaterialKey(chemicalRows).values()).map(
-      buildMaterialItem
+      buildMaterialItem,
     ),
     packaging: Array.from(groupRowsByMaterialKey(packagingRows).values()).map(
-      buildMaterialItem
-    )
+      buildMaterialItem,
+    ),
   };
 }
 async function fetchWithdrawMaterials(docNo) {
   const response = await fetch(
     `${API_URL}/wh-stock-transmit-iso-sub/${encodeURIComponent(docNo)}`,
-    { credentials: "include" }
+    { credentials: "include" },
   );
   if (!response.ok) {
     throw new Error("Failed to load withdraw materials");
@@ -453,12 +492,25 @@ function renderWithdrawContent(filter = "all") {
   if (!data) {
     return renderWithdrawLoading();
   }
+
   const sections = [];
   if ((filter === "all" || filter === "R") && data.chemical.length > 0) {
-    sections.push(renderSection("\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E40\u0E04\u0E21\u0E35 (R)", data.chemical, "R"));
+    sections.push(
+      renderSection(
+        "\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E40\u0E04\u0E21\u0E35 (R)",
+        data.chemical,
+        "R",
+      ),
+    );
   }
   if ((filter === "all" || filter === "P") && data.packaging.length > 0) {
-    sections.push(renderSection("\u0E1A\u0E23\u0E23\u0E08\u0E38\u0E20\u0E31\u0E13\u0E11\u0E4C (P)", data.packaging, "P"));
+    sections.push(
+      renderSection(
+        "\u0E1A\u0E23\u0E23\u0E08\u0E38\u0E20\u0E31\u0E13\u0E11\u0E4C (P)",
+        data.packaging,
+        "P",
+      ),
+    );
   }
   if (sections.length === 0) {
     return `<p class="withdraw-empty">\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A</p>`;
@@ -467,14 +519,16 @@ function renderWithdrawContent(filter = "all") {
 }
 async function openWithdrawPanel(item) {
   const panel = document.getElementById("withdrawPanel");
-  const productId = item.getAttribute("data-product-code") || item.getAttribute("data-id");
+  const productId =
+    item.getAttribute("data-product-code") || item.getAttribute("data-id");
   const name = item.getAttribute("data-name");
   const lot = item.getAttribute("data-lot");
   const amount = item.getAttribute("data-amount");
   const unit = item.getAttribute("data-unit");
   const docNo = item.getAttribute("data-doc") || "";
   document.getElementById("withdrawTitle").textContent = name;
-  document.getElementById("withdrawMeta").textContent = `\u0E08\u0E33\u0E19\u0E27\u0E19: ${amount} ${unit} \xB7 Lot: ${lot}`;
+  document.getElementById("withdrawMeta").textContent =
+    `\u0E08\u0E33\u0E19\u0E27\u0E19: ${amount} ${unit} \xB7 Lot: ${lot}`;
   panel.dataset.productId = productId;
   panel.dataset.batchLot = lot;
   panel.dataset.docNo = docNo;
@@ -485,15 +539,17 @@ async function openWithdrawPanel(item) {
     tab.classList.toggle("active", tab.dataset.filter === "all");
   });
   panel.classList.add("active");
-  document.getElementById("withdrawContent").innerHTML = renderWithdrawLoading();
+  document.getElementById("withdrawContent").innerHTML =
+    renderWithdrawLoading();
   try {
     withdrawMaterialsCache = await fetchWithdrawMaterials(docNo);
-    document.getElementById("withdrawContent").innerHTML = renderWithdrawContent("all");
+    document.getElementById("withdrawContent").innerHTML =
+      renderWithdrawContent("all");
   } catch (error) {
     console.error(error);
     withdrawMaterialsCache = null;
     document.getElementById("withdrawContent").innerHTML = renderWithdrawError(
-      "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E42\u0E2B\u0E25\u0E14\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E44\u0E14\u0E49"
+      "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E42\u0E2B\u0E25\u0E14\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E44\u0E14\u0E49",
     );
   }
 }
@@ -506,7 +562,7 @@ function getWithdrawProductContext() {
     docNo: panel.dataset.docNo || "PB-BL03.3",
     batchSize: panel.dataset.batchSize || "",
     batchUnit: panel.dataset.batchUnit || "",
-    productionDate: panel.dataset.productionDate || ""
+    productionDate: panel.dataset.productionDate || "",
   };
 }
 function collectWithdrawPrintContext(printBtn) {
@@ -522,7 +578,7 @@ function collectWithdrawPrintContext(printBtn) {
       round: Number(roundItem.dataset.round),
       lot: roundItem.dataset.itemLot,
       code: roundItem.dataset.itemCode,
-      ...product
+      ...product,
     };
   }
   if (completedCard) {
@@ -534,7 +590,7 @@ function collectWithdrawPrintContext(printBtn) {
       round: null,
       lot: completedCard.dataset.itemLot,
       code: completedCard.dataset.itemCode,
-      ...product
+      ...product,
     };
   }
   return null;
@@ -548,10 +604,15 @@ function setWithdrawFilter(filter) {
   panel.querySelectorAll(".withdraw-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.filter === filter);
   });
-  document.getElementById("withdrawContent").innerHTML = renderWithdrawContent(filter);
+  document.getElementById("withdrawContent").innerHTML =
+    renderWithdrawContent(filter);
 }
 function escapeHtml(value) {
-  return String(value != null ? value : "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return String(value != null ? value : "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 function renderProductionListItem(item) {
   return `
@@ -604,7 +665,9 @@ function updateProductionLoadMoreVisibility() {
   loadMoreEl.hidden = !productionHasMore;
 }
 function appendProductionListItems(listEl, loadMoreEl, items) {
-  const itemsHtml = items.map((item) => renderProductionListItem(item)).join("");
+  const itemsHtml = items
+    .map((item) => renderProductionListItem(item))
+    .join("");
   if (loadMoreEl) {
     loadMoreEl.insertAdjacentHTML("beforebegin", itemsHtml);
   } else {
@@ -619,8 +682,15 @@ function initProductionListObserver() {
   }
   productionListObserver = new IntersectionObserver(async (entries) => {
     var _a, _b;
-    if (((_a = entries[0]) == null ? void 0 : _a.isIntersecting) && !productionLoadingData && productionHasMore) {
-      const query = ((_b = document.getElementById("productionSearch")) == null ? void 0 : _b.value.trim()) || "";
+    if (
+      ((_a = entries[0]) == null ? void 0 : _a.isIntersecting) &&
+      !productionLoadingData &&
+      productionHasMore
+    ) {
+      const query =
+        ((_b = document.getElementById("productionSearch")) == null
+          ? void 0
+          : _b.value.trim()) || "";
       await loadProductionList(query, productionStatusFilter, { append: true });
     }
   });
@@ -636,13 +706,19 @@ function initProductionListEvents() {
     openWithdrawPanel(item);
   });
 }
-async function loadProductionList(query = "", statusFilter = productionStatusFilter, { append = false } = {}) {
+async function loadProductionList(
+  query = "",
+  statusFilter = productionStatusFilter,
+  { append = false } = {},
+) {
   const listEl = document.getElementById("productionList");
   const emptyEl = document.getElementById("productionEmpty");
   const loadingEl = document.getElementById("productionLoading");
   const loadMoreEl = document.getElementById("productionLoadMore");
   if (!listEl || productionLoadingData) return;
-  const loadGeneration = append ? productionLoadGeneration : ++productionLoadGeneration;
+  const loadGeneration = append
+    ? productionLoadGeneration
+    : ++productionLoadGeneration;
   productionStatusFilter = statusFilter;
   productionLoadingData = true;
   if (!append) {
@@ -650,7 +726,8 @@ async function loadProductionList(query = "", statusFilter = productionStatusFil
     productionHasMore = true;
     clearProductionListItems(listEl);
     if (emptyEl) {
-      emptyEl.textContent = "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E17\u0E35\u0E48\u0E04\u0E49\u0E19\u0E2B\u0E32";
+      emptyEl.textContent =
+        "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E17\u0E35\u0E48\u0E04\u0E49\u0E19\u0E2B\u0E32";
       emptyEl.hidden = true;
     }
     if (loadingEl) loadingEl.hidden = false;
@@ -670,7 +747,7 @@ async function loadProductionList(query = "", statusFilter = productionStatusFil
     }
     const response = await fetch(
       `${API_URL}/wh-stock-transmit-iso?${params.toString()}`,
-      { credentials: "include" }
+      { credentials: "include" },
     );
     if (!response.ok) {
       throw new Error("Failed to load production list");
@@ -702,7 +779,8 @@ async function loadProductionList(query = "", statusFilter = productionStatusFil
   } catch (error) {
     console.error(error);
     if (!append && emptyEl) {
-      emptyEl.textContent = "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E42\u0E2B\u0E25\u0E14\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E1C\u0E25\u0E34\u0E15\u0E44\u0E14\u0E49";
+      emptyEl.textContent =
+        "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E42\u0E2B\u0E25\u0E14\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E1C\u0E25\u0E34\u0E15\u0E44\u0E14\u0E49";
       emptyEl.hidden = false;
     }
     productionHasMore = false;
@@ -717,7 +795,10 @@ function handleProductionSearchInput() {
   clearTimeout(productionSearchTimer);
   productionSearchTimer = setTimeout(() => {
     var _a;
-    const query = ((_a = document.getElementById("productionSearch")) == null ? void 0 : _a.value.trim()) || "";
+    const query =
+      ((_a = document.getElementById("productionSearch")) == null
+        ? void 0
+        : _a.value.trim()) || "";
     loadProductionList(query, productionStatusFilter);
   }, 300);
 }
@@ -725,61 +806,76 @@ document.addEventListener("DOMContentLoaded", () => {
   var _a;
   initProductionListEvents();
   loadProductionList();
-  document.getElementById("backToList").addEventListener("click", closeWithdrawPanel);
+  document
+    .getElementById("backToList")
+    .addEventListener("click", closeWithdrawPanel);
   document.querySelectorAll(".withdraw-tab").forEach((tab) => {
     tab.addEventListener("click", () => setWithdrawFilter(tab.dataset.filter));
   });
-  document.getElementById("withdrawContent").addEventListener("click", (event) => {
-    const weighBtn = event.target.closest(".weigh-btn");
-    if (weighBtn) {
-      event.stopPropagation();
+  document
+    .getElementById("withdrawContent")
+    .addEventListener("click", (event) => {
+      const weighBtn = event.target.closest(".weigh-btn");
+      if (weighBtn) {
+        event.stopPropagation();
+        if (typeof openWeighPanel === "function") {
+          openWeighPanel({
+            type: weighBtn.dataset.type,
+            name: weighBtn.dataset.itemName,
+            itemCode:
+              weighBtn.dataset.materialItemCode ||
+              weighBtn.dataset.itemCode ||
+              "",
+            amount: Number(weighBtn.dataset.roundNeeded),
+            unit: weighBtn.dataset.itemUnit,
+            round: Number(weighBtn.dataset.round),
+            ...getWithdrawProductContext(),
+          });
+        }
+        return;
+      }
+      const printBtn = event.target.closest(".print-btn");
+      if (printBtn) {
+        event.stopPropagation();
+        const context = collectWithdrawPrintContext(printBtn);
+        if (context && typeof showPrintPreviewFromWithdraw === "function") {
+          showPrintPreviewFromWithdraw(context);
+        }
+        return;
+      }
+      const card = event.target.closest(".material-card--clickable");
+      if (!card) return;
       if (typeof openWeighPanel === "function") {
+        const total = Number(card.dataset.itemTotal);
+        const withdrawn = Number(card.dataset.itemWithdrawn);
         openWeighPanel({
-          type: weighBtn.dataset.type,
-          name: weighBtn.dataset.itemName,
-          itemCode: weighBtn.dataset.materialItemCode || weighBtn.dataset.itemCode || "",
-          amount: Number(weighBtn.dataset.roundNeeded),
-          unit: weighBtn.dataset.itemUnit,
-          round: Number(weighBtn.dataset.round),
-          ...getWithdrawProductContext()
+          type: card.dataset.type,
+          name: card.dataset.itemName,
+          itemCode:
+            card.dataset.materialItemCode || card.dataset.itemCode || "",
+          amount: total - withdrawn,
+          unit: card.dataset.itemUnit,
+          ...getWithdrawProductContext(),
         });
       }
-      return;
-    }
-    const printBtn = event.target.closest(".print-btn");
-    if (printBtn) {
-      event.stopPropagation();
-      const context = collectWithdrawPrintContext(printBtn);
-      if (context && typeof showPrintPreviewFromWithdraw === "function") {
-        showPrintPreviewFromWithdraw(context);
-      }
-      return;
-    }
-    const card = event.target.closest(".material-card--clickable");
-    if (!card) return;
-    if (typeof openWeighPanel === "function") {
-      const total = Number(card.dataset.itemTotal);
-      const withdrawn = Number(card.dataset.itemWithdrawn);
-      openWeighPanel({
-        type: card.dataset.type,
-        name: card.dataset.itemName,
-        itemCode: card.dataset.materialItemCode || card.dataset.itemCode || "",
-        amount: total - withdrawn,
-        unit: card.dataset.itemUnit,
-        ...getWithdrawProductContext()
-      });
-    }
-  });
+    });
   document.querySelectorAll(".filter-tabs .tab-btn").forEach((button) => {
     button.addEventListener("click", () => {
       var _a2;
-      document.querySelectorAll(".filter-tabs .tab-btn").forEach((btn) => btn.classList.remove("active"));
+      document
+        .querySelectorAll(".filter-tabs .tab-btn")
+        .forEach((btn) => btn.classList.remove("active"));
       button.classList.add("active");
       const statusFilter = button.dataset.statusFilter || "all";
-      const query = ((_a2 = document.getElementById("productionSearch")) == null ? void 0 : _a2.value.trim()) || "";
+      const query =
+        ((_a2 = document.getElementById("productionSearch")) == null
+          ? void 0
+          : _a2.value.trim()) || "";
       loadProductionList(query, statusFilter);
     });
   });
-  (_a = document.getElementById("productionSearch")) == null ? void 0 : _a.addEventListener("input", handleProductionSearchInput);
+  (_a = document.getElementById("productionSearch")) == null
+    ? void 0
+    : _a.addEventListener("input", handleProductionSearchInput);
   initWelcomeText();
 });
