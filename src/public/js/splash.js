@@ -53,7 +53,7 @@ function initSplashScreen(onComplete) {
       clearInterval(interval);
       setTimeout(() => {
         splash.classList.add("fade-out");
-        splash.style.zIndex = "-1";
+        splash.style.display = "none";
         markSplashAsShown();
         onComplete == null ? void 0 : onComplete();
       }, 300);

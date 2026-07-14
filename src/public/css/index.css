@@ -54,7 +54,6 @@
 .login-error {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
   padding: 12px 14px;
   margin-bottom: 16px;
   background-color: #fef2f2;

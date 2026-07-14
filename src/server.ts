@@ -22,6 +22,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   // "https://2532-183-88-229-99.ngrok-free.app",
   `${HOST}:${PORT}`,
+  "http://10.0.2.2:3000",
   // "https://yourdomain.com"
 ];
 

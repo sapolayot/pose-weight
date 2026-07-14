@@ -15,7 +15,7 @@
 .header-panel,
 .app-header-panel {
   margin: 16px -20px 0;
-  padding: 16px 20px 18px;
+  padding: 16px 20px 8px;
   background-color: #ffffff;
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
@@ -29,7 +29,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
 }
 
 .app-header h1 {
@@ -76,7 +75,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 12px 16px 20px;
+  padding: 0px 16px 20px;
   background-color: #ffffff;
 }
 
@@ -126,7 +125,6 @@
 
 .filter-tabs {
   display: flex;
-  gap: 8px;
   overflow-x: auto;
   padding-bottom: 2px;
   scrollbar-width: none;
@@ -162,7 +160,6 @@
 .production-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .list-item {
@@ -267,7 +264,12 @@
 
 .withdraw-panel {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -275,10 +277,14 @@
   transform: translateX(100%);
   transition: transform 0.3s ease;
   overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .withdraw-panel.active {
   transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .withdraw-header-body {
@@ -328,7 +334,6 @@
 
 .withdraw-tabs {
   display: flex;
-  gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -406,7 +411,6 @@
 .material-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .material-card {
@@ -432,7 +436,6 @@
 .material-card-main {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
 }
 
 .material-icon {
@@ -466,7 +469,6 @@
 .material-name-row {
   display: flex;
   align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 4px;
 }
@@ -531,13 +533,11 @@
   margin-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .round-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
   padding: 10px;
   border-radius: 10px;
 }
@@ -573,7 +573,6 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 
 .round-label {
@@ -622,7 +621,12 @@
 /* --- Weigh Panel --- */
 .weigh-panel {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 300;
   display: flex;
   flex-direction: column;
@@ -630,10 +634,14 @@
   transform: translateX(100%);
   transition: transform 0.3s ease;
   overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .weigh-panel.active {
   transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .weigh-header-body {
@@ -682,7 +690,6 @@
   padding: 0 16px 24px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .weigh-steps::-webkit-scrollbar {
@@ -722,7 +729,6 @@
 .weigh-step-row {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
 .weigh-step-num {
@@ -750,7 +756,6 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 
 .weigh-step-title {
@@ -832,7 +837,6 @@ button.weigh-step-status--edit {
 .weigh-step-scan {
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .scan-box {
@@ -917,7 +921,6 @@ button.weigh-step-status--edit {
 .scan-alert-stock-title {
   display: flex;
   align-items: center;
-  gap: 8px;
   color: #92400e;
   font-size: 13px;
   font-weight: 700;
@@ -927,7 +930,6 @@ button.weigh-step-status--edit {
 .scan-alert-stock-row {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
   font-size: 12px;
   color: #78350f;
   margin-bottom: 6px;
@@ -949,7 +951,6 @@ button.weigh-step-status--edit {
 
 .scan-alert-stock-actions {
   display: flex;
-  gap: 8px;
 }
 
 .stock-cancel-btn,
@@ -982,20 +983,17 @@ button.weigh-step-status--edit {
 .weigh-actions {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
 }
 
 .weigh-actions--scan {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
 }
 
 .weigh-action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
   padding: 10px 4px;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
@@ -1012,7 +1010,6 @@ button.weigh-step-status--edit {
   min-height: 38px;
   padding: 8px 3px;
   font-size: 9px;
-  gap: 3px;
   line-height: 1.15;
 }
 
@@ -1089,7 +1086,6 @@ button.weigh-step-status--edit {
 .scale-options {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   margin-bottom: 4px;
 }
 
@@ -1176,7 +1172,6 @@ button.weigh-step-status--edit {
 .weigh-warning-banner {
   display: flex;
   align-items: center;
-  gap: 8px;
   padding: 10px 12px;
   margin-bottom: 12px;
   border-radius: 10px;
@@ -1191,7 +1186,6 @@ button.weigh-step-status--edit {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
   padding: 10px 12px;
   margin-bottom: 12px;
   border-radius: 10px;
@@ -1226,13 +1220,11 @@ button.weigh-step-status--edit {
 .weigh-step-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
 }
 
 .weigh-step-action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
@@ -1278,7 +1270,6 @@ button.weigh-step-status--edit {
 .qty-lot-banner {
   display: flex;
   align-items: center;
-  gap: 8px;
   padding: 10px 14px;
   margin-bottom: 14px;
   border-radius: 12px;
@@ -1296,7 +1287,6 @@ button.weigh-step-status--edit {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
   margin-bottom: 10px;
   font-size: 13px;
 }
@@ -1313,7 +1303,6 @@ button.weigh-step-status--edit {
 .qty-panel {
   display: flex;
   align-items: stretch;
-  gap: 0;
   margin-bottom: 12px;
   border: 2px dashed #b8d4eb;
   border-radius: 14px;
@@ -1437,7 +1426,12 @@ button.weigh-step-status--edit {
 /* --- Summary Panel --- */
 .summary-panel {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 250;
   display: flex;
   flex-direction: column;
@@ -1491,7 +1485,6 @@ button.weigh-step-status--edit {
   padding: 0 16px 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .summary-content::-webkit-scrollbar {
@@ -1533,7 +1526,6 @@ button.weigh-step-status--edit {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
   padding: 8px 0;
   border-bottom: 1px solid #f1f5f9;
   font-size: 12px;
@@ -1580,7 +1572,6 @@ button.weigh-step-status--edit {
 
 .summary-actions {
   display: flex;
-  gap: 10px;
   padding: 14px 16px 20px;
   border-top: 1px solid #edf2f7;
 }
@@ -1596,7 +1587,6 @@ button.weigh-step-status--edit {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
 }
 
 .summary-print-btn {
@@ -1615,7 +1605,12 @@ button.weigh-step-status--edit {
 /* --- Print Preview Panel --- */
 .print-preview-panel {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 500;
   display: flex;
   flex-direction: column;
@@ -1623,11 +1618,13 @@ button.weigh-step-status--edit {
   transform: translateX(100%);
   transition: transform 0.3s ease;
   overflow: hidden;
+  visibility: hidden;
   pointer-events: none;
 }
 
 .print-preview-panel.active {
   transform: translateX(0);
+  visibility: visible;
   pointer-events: auto;
 }
 
@@ -1692,7 +1689,6 @@ button.weigh-step-status--edit {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
 }
 
 .weighing-tag-head-left {
@@ -1727,7 +1723,6 @@ button.weigh-step-status--edit {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
 }
 
 .weighing-tag-date-col {
@@ -1735,13 +1730,11 @@ button.weigh-step-status--edit {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .weighing-tag-stack {
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 
 .weighing-tag-stack span {
@@ -1790,19 +1783,16 @@ button.weigh-step-status--edit {
 .weighing-tag-section--product {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .weighing-tag-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px 16px;
 }
 
 .weighing-tag-section--weights {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   padding-top: 12px;
   padding-bottom: 12px;
 }
@@ -1811,7 +1801,6 @@ button.weigh-step-status--edit {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
 }
 
 .weighing-tag-weight-row span {
@@ -1837,7 +1826,6 @@ button.weigh-step-status--edit {
 .weighing-tag-section--footer {
   display: flex;
   flex-direction: column;
-  gap: 6px;
   padding-top: 12px;
   padding-bottom: 14px;
 }
@@ -1878,7 +1866,6 @@ button.weigh-step-status--edit {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
 }
 
 .print-preview-send-btn i {

@@ -19,6 +19,7 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  display: none;
 }
 
 .splash-logo-box {
@@ -50,7 +51,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
 }
 
 .progress-bar {

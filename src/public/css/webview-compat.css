@@ -1,0 +1,115 @@
+/* Android 9 WebView layout safety (Chrome ~69: no inset / flex gap) */
+
+.mobile-container,
+.app-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.list-view {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+.withdraw-panel,
+.weigh-panel,
+.summary-panel,
+.print-preview-panel {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box;
+}
+
+.withdraw-panel:not(.active),
+.weigh-panel:not(.active),
+.summary-panel:not(.active),
+.print-preview-panel:not(.active) {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.splash-screen.fade-out {
+  display: none !important;
+}
+
+/* Spacing fallbacks (replacing unsupported flex gap) */
+.header-top > * + * {
+  margin-left: 12px;
+}
+
+.filter-tabs > * + *,
+.withdraw-tabs > * + * {
+  margin-left: 8px;
+}
+
+.production-list > * + * {
+  margin-top: 12px;
+}
+
+.material-list > * + *,
+.weigh-steps > * + *,
+.summary-content > * + * {
+  margin-top: 10px;
+}
+
+.summary-content > * + * {
+  margin-top: 12px;
+}
+
+.material-card-main > * + * {
+  margin-left: 10px;
+}
+
+.material-name-row > * + *,
+.material-rounds > * + *,
+.round-meta > * + *,
+.round-item-meta > * + * {
+  margin-left: 8px;
+}
+
+.material-rounds > * + *,
+.round-list > * + * {
+  margin-top: 8px;
+}
+
+.summary-actions > * + *,
+.print-preview-actions > * + *,
+.scan-actions > * + *,
+.step-actions > * + *,
+.qty-stepper > * + *,
+.weight-actions > * + * {
+  margin-left: 10px;
+}
+
+.summary-row > * + *,
+.print-preview-row > * + *,
+.detail-row > * + *,
+.weight-row > * + * {
+  margin-left: 8px;
+}
+
+.splash-footer > * + * {
+  margin-top: 12px;
+}
+
+.form-group + .form-group,
+.login-form .input-group + .input-group {
+  margin-top: 10px;
+}
+
+.step-body > * + *,
+.scan-box-inner > * + * {
+  margin-top: 8px;
+}
+
+.weigh-step-header > * + *,
+.step-title-row > * + * {
+  margin-left: 8px;
+}
