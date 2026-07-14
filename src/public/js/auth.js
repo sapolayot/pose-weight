@@ -4,7 +4,10 @@ const PUBLIC_PAGES = /* @__PURE__ */ new Set([
   "/404.html",
   "/mqtt-weight.html",
 ]);
-const PROTECTED_PAGES = /* @__PURE__ */ new Set(["/main.html"]);
+const PROTECTED_PAGES = /* @__PURE__ */ new Set([
+  "/menu.html",
+  "/main.html",
+]);
 function isProtectedPage(path) {
   return PROTECTED_PAGES.has(path);
 }
@@ -39,7 +42,7 @@ async function runPageAuthGuard() {
   if (!authType) return null;
   const user = await fetchSessionUser();
   if (authType === "guest" && user) {
-    window.location.replace("/main.html");
+    window.location.replace("/menu.html");
     return null;
   }
   if (authType === "protected" && !user) {

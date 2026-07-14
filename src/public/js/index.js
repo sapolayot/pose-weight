@@ -29,9 +29,16 @@ async function login() {
   hideLoginError();
   const usernameInput = document.getElementById("username");
   const passwordInput = document.getElementById("password");
-  const username = (_a = usernameInput == null ? void 0 : usernameInput.value) != null ? _a : "";
-  const password = (_b = passwordInput == null ? void 0 : passwordInput.value) != null ? _b : "";
-  const rememberMe = (_c = document.getElementById("rememberMe")) == null ? void 0 : _c.checked;
+  const username =
+    (_a = usernameInput == null ? void 0 : usernameInput.value) != null
+      ? _a
+      : "";
+  const password =
+    (_b = passwordInput == null ? void 0 : passwordInput.value) != null
+      ? _b
+      : "";
+  const rememberMe =
+    (_c = document.getElementById("rememberMe")) == null ? void 0 : _c.checked;
   const validationError = getLoginValidationError(username, password);
   if (validationError) {
     showLoginError(validationError);
@@ -42,10 +49,10 @@ async function login() {
     const res = await fetch(`${API_URL}/login`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ username: trimmedUsername, password, rememberMe })
+      body: JSON.stringify({ username: trimmedUsername, password, rememberMe }),
     });
     let data = {};
     try {
@@ -54,7 +61,10 @@ async function login() {
       data = {};
     }
     if (!res.ok) {
-      showLoginError(data.message || "\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08");
+      showLoginError(
+        data.message ||
+          "\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08",
+      );
       return;
     }
     if (rememberMe) {
@@ -62,10 +72,12 @@ async function login() {
     } else {
       localStorage.removeItem("rememberedUser");
     }
-    window.location.href = "/main.html";
+    window.location.href = "/menu.html";
   } catch (err) {
     console.error(err);
-    showLoginError("\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E44\u0E14\u0E49");
+    showLoginError(
+      "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E44\u0E14\u0E49",
+    );
   }
 }
 document.addEventListener("DOMContentLoaded", () => {

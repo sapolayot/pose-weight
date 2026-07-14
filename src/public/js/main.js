@@ -1,52 +1,5 @@
 const API_URL = "/api";
-const DAYS_GREETING = [
-  "\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35\u0E27\u0E31\u0E19\u0E2D\u0E32\u0E17\u0E34\u0E15\u0E22\u0E4C",
-  "\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35\u0E27\u0E31\u0E19\u0E08\u0E31\u0E19\u0E17\u0E23\u0E4C",
-  "\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35\u0E27\u0E31\u0E19\u0E2D\u0E31\u0E07\u0E04\u0E32\u0E23",
-  "\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35\u0E27\u0E31\u0E19\u0E1E\u0E38\u0E18",
-  "\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35\u0E27\u0E31\u0E19\u0E1E\u0E24\u0E2B\u0E31\u0E2A\u0E1A\u0E14\u0E35",
-  "\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35\u0E27\u0E31\u0E19\u0E28\u0E38\u0E01\u0E23\u0E4C",
-  "\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35\u0E27\u0E31\u0E19\u0E40\u0E2A\u0E32\u0E23\u0E4C",
-];
-function setWelcomeText(user) {
-  var _a;
-  const welcomeEl = document.getElementById("welcome-text");
-  if (!welcomeEl) return;
-  const greeting = DAYS_GREETING[/* @__PURE__ */ new Date().getDay()];
-  const firstName =
-    (_a = user == null ? void 0 : user.firstName) == null ? void 0 : _a.trim();
-  welcomeEl.textContent = firstName ? `${greeting}, ${firstName}` : greeting;
-}
-function initWelcomeText() {
-  if (window.__sessionUser) {
-    setWelcomeText(window.__sessionUser);
-    return;
-  }
-  document.addEventListener(
-    "auth:ready",
-    (event) => {
-      setWelcomeText(event.detail);
-    },
-    { once: true },
-  );
-}
 let withdrawMaterialsCache = null;
-async function logout() {
-  try {
-    const proceed = confirm(
-      "\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E23\u0E30\u0E1A\u0E1A?",
-    );
-    if (proceed) {
-      await fetch(`${API_URL}/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-      window.location.href = "/";
-    }
-  } catch (err) {
-    console.error(err);
-  }
-}
 function formatAmount(value) {
   return Number(value).toLocaleString("en-US", {
     minimumFractionDigits: 2,
@@ -809,6 +762,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("backToList")
     .addEventListener("click", closeWithdrawPanel);
+  document.getElementById("backToMenu").addEventListener("click", function () {
+    window.location.href = "./menu.html";
+  });
   document.querySelectorAll(".withdraw-tab").forEach((tab) => {
     tab.addEventListener("click", () => setWithdrawFilter(tab.dataset.filter));
   });

@@ -7,7 +7,7 @@ export const GUEST_ONLY_PAGES = new Set(["/", "/index.html"]);
 export const PUBLIC_PAGES = new Set(["/404.html", "/mqtt-weight.html"]);
 
 /** หน้าที่ต้อง login — เพิ่ม path ของหน้าใหม่ที่นี่ */
-export const PROTECTED_PAGES = new Set(["/main.html"]);
+export const PROTECTED_PAGES = new Set(["/menu.html", "/main.html"]);
 
 function isProtectedPage(path: string): boolean {
   return PROTECTED_PAGES.has(path);
@@ -37,7 +37,7 @@ export function pageAuthMiddleware(
 
   if (GUEST_ONLY_PAGES.has(requestPath)) {
     if (isLoggedIn) {
-      return res.redirect("/main.html");
+      return res.redirect("/menu.html");
     }
     return next();
   }

@@ -26,16 +26,27 @@
       <div class="mobile-container">
         <div id="listView" class="list-view">
           <header class="app-header">
-            <div class="header-top">
-              <h1>รายการผลิต</h1>
-              <button class="logout-btn" type="button">
-                <i
-                  class="fa-solid fa-right-from-bracket"
-                  onclick="logout()"
-                ></i>
+            <div class="list-header-body">
+              <button
+                class="back-btn"
+                id="backToMenu"
+                type="button"
+                aria-label="กลับเมนู"
+              >
+                <i class="fa-solid fa-chevron-left"></i>
               </button>
+              <div class="header-top">
+                <h1>รายการผลิต</h1>
+                <a
+                  class="logout-btn home-btn"
+                  href="./menu.html"
+                  aria-label="หน้าเมนู"
+                >
+                  <i class="fa-solid fa-house"></i>
+                </a>
+              </div>
+              <p class="welcome-text" id="welcome-text"></p>
             </div>
-            <p class="welcome-text" id="welcome-text"></p>
             <div class="header-panel">
               <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass search-icon"></i>
@@ -459,6 +470,7 @@
     <script src="./js/mqtt-scale.js"></script>
     <script src="./js/splash.js"></script>
     <script src="./js/auth.js"></script>
+    <script src="./js/session-ui.js"></script>
     <script src="./js/main.js"></script>
     <script src="./js/weighing.js"></script>
   </body>
