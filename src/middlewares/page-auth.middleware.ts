@@ -4,7 +4,7 @@ import { NextFunction, Request, Response } from "express";
 export const GUEST_ONLY_PAGES = new Set(["/", "/index.html"]);
 
 /** หน้าที่เข้าได้ทุกคน ไม่ตรวจ session */
-export const PUBLIC_PAGES = new Set(["/404.html", "/weight.html"]);
+export const PUBLIC_PAGES = new Set(["/404.html", "/mqtt-weight.html"]);
 
 /** หน้าที่ต้อง login — เพิ่ม path ของหน้าใหม่ที่นี่ */
 export const PROTECTED_PAGES = new Set(["/main.html"]);
