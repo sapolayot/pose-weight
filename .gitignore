@@ -7,6 +7,8 @@ build/
 
 # Generated vendor assets (copied on npm install / build)
 src/public/vendor/
+src/public/assets/icons/fontawesome/
+src/master/assets/icons/fontawesome/
 
 # TypeScript cache
 *.tsbuildinfo

@@ -6,11 +6,12 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "rm -rf dist && tsc && node ./src/scripts/copy-fontawesome.mjs && node ./src/scripts/transpile-public-js.mjs && cp -R src/public dist/public",
-    "compat:public-js": "node ./src/scripts/transpile-public-js.mjs",
-    "compat:icons": "node ./src/scripts/copy-fontawesome.mjs",
+    "build": "rm -rf dist && tsc && node ./scripts/copy-fontawesome.mjs && node ./scripts/sync-assets.mjs && node ./scripts/transpile-public-js.mjs && node ./scripts/copy-module-static.mjs",
+    "compat:public-js": "node ./scripts/transpile-public-js.mjs",
+    "compat:icons": "node ./scripts/copy-fontawesome.mjs",
+    "sync:assets": "node ./scripts/sync-assets.mjs",
     "start": "node dist/server.js",
-    "postinstall": "node ./src/scripts/copy-fontawesome.mjs"
+    "postinstall": "node ./scripts/copy-fontawesome.mjs && node ./scripts/sync-assets.mjs"
   },
   "dependencies": {
     "cors": "2.8.6",

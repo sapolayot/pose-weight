@@ -3,27 +3,32 @@ import dotenv from "dotenv";
 import express, { Application, NextFunction, Request, Response } from "express";
 import session from "express-session";
 import path from "path";
-import { pageAuthMiddleware } from "./middlewares/page-auth.middleware";
-import routes from "./routes";
-
 import swaggerUi from "swagger-ui-express";
-import { testConnection } from "./config/database.config";
-import { buildSwaggerSpec } from "./config/swagger";
+import { testConnection } from "./master/config/database.config";
+import {
+  buildSwaggerSpec,
+  listSwaggerModules,
+} from "./master/config/swagger";
+import authRoutes from "./master/auth/routes";
+import { pageAuthMiddleware } from "./master/middleware/page-auth.middleware";
+import mixRoutes from "./mix/routes";
+import packRoutes from "./pack/routes";
+import receiveRoutes from "./receive/routes";
+import scaleCheckRoutes from "./scale-check/routes";
+import specialRoutes from "./special/routes";
+import weighRoutes from "./weigh/routes";
 
 dotenv.config();
 
 const HOST = process.env.HOST || "localhost";
-
 const PORT = process.env.PORT || 3000;
 
 const app: Application = express();
 
 const allowedOrigins = [
   "http://localhost:3000",
-  // "https://2532-183-88-229-99.ngrok-free.app",
   `${HOST}:${PORT}`,
   "http://10.0.2.2:3000",
-  // "https://yourdomain.com"
 ];
 
 const corsOptions: CorsOptions = {
@@ -40,9 +45,10 @@ const corsOptions: CorsOptions = {
   credentials: true,
 };
 
-/**
- * Middleware
- */
+const masterPublic = path.join(__dirname, "master/public");
+const weighPublic = path.join(__dirname, "weigh/public");
+const masterAssets = path.join(masterPublic, "assets");
+
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -62,20 +68,41 @@ app.use(
   }),
 );
 
-/**
- * API Routes
- */
-app.get("/api/health", (req: Request, res: Response) => {
+app.get("/api/health", (_req: Request, res: Response) => {
   res.json({
     success: true,
     message: "API is running",
   });
 });
 
-app.use("/api", routes);
+app.use("/api", authRoutes);
+app.use("/api", weighRoutes);
+app.use("/api", receiveRoutes);
+app.use("/api", scaleCheckRoutes);
+app.use("/api", specialRoutes);
+app.use("/api", mixRoutes);
+app.use("/api", packRoutes);
 
 app.get("/api/swagger.json", (_req: Request, res: Response) => {
   res.json(buildSwaggerSpec(app));
+});
+
+app.get("/api/swagger/modules", (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    modules: listSwaggerModules(),
+  });
+});
+
+app.get("/api/swagger/modules/:module", (req: Request, res: Response) => {
+  const moduleName = String(req.params.module || "");
+  if (!listSwaggerModules().includes(moduleName)) {
+    return res.status(404).json({
+      success: false,
+      message: `Unknown swagger module: ${moduleName}`,
+    });
+  }
+  res.json(buildSwaggerSpec(app, moduleName));
 });
 
 app.use(
@@ -88,24 +115,39 @@ app.use(
   }),
 );
 
-/**
- * Page Auth Middleware (HTML pages)
- */
-app.use(pageAuthMiddleware);
-
-app.get("/404.html", (req: Request, res: Response) => {
-  res.status(404).sendFile(path.join(__dirname, "./public", "404.html"));
+/** Stable page aliases */
+app.get("/", (_req: Request, res: Response) => {
+  res.sendFile(path.join(masterPublic, "index.html"));
 });
 
-/**
- * Static Files
- * http://localhost:3000/
- */
-app.use(express.static(path.join(__dirname, "./public")));
+app.get("/index.html", (_req: Request, res: Response) => {
+  res.sendFile(path.join(masterPublic, "index.html"));
+});
 
-/**
- * 404 — redirect ไป /404.html เพื่อให้ asset path และ auth ทำงานถูกต้อง
- */
+app.get("/menu.html", (_req: Request, res: Response) => {
+  res.sendFile(path.join(masterPublic, "menu.html"));
+});
+
+app.get("/main.html", (_req: Request, res: Response) => {
+  res.sendFile(path.join(weighPublic, "main.html"));
+});
+
+app.get("/mqtt-weight.html", (_req: Request, res: Response) => {
+  res.sendFile(path.join(weighPublic, "mqtt-weight.html"));
+});
+
+app.get("/404.html", (_req: Request, res: Response) => {
+  res.status(404).sendFile(path.join(masterPublic, "404.html"));
+});
+
+app.use(pageAuthMiddleware);
+
+app.use("/assets", express.static(masterAssets));
+app.use("/master", express.static(masterPublic));
+app.use("/weigh", express.static(weighPublic));
+/** Back-compat for older /modules/weigh links */
+app.use("/modules/weigh", express.static(weighPublic));
+
 app.use((req: Request, res: Response) => {
   if (req.path.startsWith("/api")) {
     return res.status(404).json({
@@ -117,10 +159,7 @@ app.use((req: Request, res: Response) => {
   res.status(404).redirect("/404.html");
 });
 
-/**
- * Global Error Handler
- */
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
 
   res.status(500).json({
@@ -135,6 +174,9 @@ async function startServer() {
     console.log("=================================");
     console.log(`Server running at ${HOST}:${PORT}`);
     console.log(`Swagger UI at ${HOST}:${PORT}/api/swagger`);
+    console.log(
+      `Module swagger e.g. ${HOST}:${PORT}/api/swagger/modules/weigh`,
+    );
     console.log("=================================");
   });
 }
