@@ -756,6 +756,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  margin-left: 12px;
 }
 
 .weigh-step-title {
@@ -953,6 +954,10 @@ button.weigh-step-status--edit {
   display: flex;
 }
 
+.round-dot {
+  margin-right: 8px;
+}
+
 .stock-cancel-btn,
 .stock-continue-btn {
   flex: 1;
@@ -988,6 +993,8 @@ button.weigh-step-status--edit {
 .weigh-actions--scan {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 12px;
+  gap: 4px;
 }
 
 .weigh-action-btn {
@@ -1248,6 +1255,7 @@ button.weigh-step-status--edit {
 
 .weigh-actions--scale {
   margin-top: 12px;
+  gap: 12px;
 }
 
 .weigh-action-btn--scale {

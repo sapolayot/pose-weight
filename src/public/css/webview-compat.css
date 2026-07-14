@@ -67,13 +67,6 @@
   margin-left: 10px;
 }
 
-.material-name-row > * + *,
-.material-rounds > * + *,
-.round-meta > * + *,
-.round-item-meta > * + * {
-  margin-left: 8px;
-}
-
 .material-rounds > * + *,
 .round-list > * + * {
   margin-top: 8px;
